@@ -50,3 +50,26 @@ export type ColorFormatType =
   | "oklch"
   | "lch"
   | "p3";
+
+export type UseSelectionActions = {
+  toggleSelection: (item: HistoryItem) => void;
+  selectAll: () => void;
+  clearSelection: () => void;
+};
+
+export type UseSelectionState = {
+  selectedItems: Set<HistoryItem>;
+  anySelected: boolean;
+  allSelected: boolean;
+  countSelected: number;
+};
+
+export type UseSelectionHelpers = {
+  getIsItemSelected: (item: HistoryItem) => boolean;
+};
+
+export type UseSelectionReturn = {
+  actions: UseSelectionActions;
+  selected: UseSelectionState;
+  helpers: UseSelectionHelpers;
+};

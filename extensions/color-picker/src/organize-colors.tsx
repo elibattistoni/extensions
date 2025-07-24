@@ -16,13 +16,15 @@ import { showFailureToast, usePromise } from "@raycast/utils";
 import CopyAsSubmenu from "./components/CopyAsSubmenu";
 import { EditTitle } from "./components/EditTitle";
 import { useHistory } from "./history";
-import { HistoryItem } from "./types";
+import { HistoryItem, UseSelectionReturn } from "./types";
+import { useSelection } from "./useSelection";
 import { getFormattedColor, getPreviewColor } from "./utils";
 
 const preferences: Preferences.OrganizeColors = getPreferenceValues();
 
 export default function Command() {
   const { history } = useHistory();
+  const selection = useSelection(history);
 
   return (
     <Grid>
@@ -54,18 +56,22 @@ export default function Command() {
       {history?.map((historyItem) => {
         const formattedColor = getFormattedColor(historyItem.color);
         const previewColor = getPreviewColor(historyItem.color);
-        const color = { light: previewColor, dark: previewColor, adjustContrast: false };
+
+        const isItemSelected = selection.helpers.getIsItemSelected(historyItem);
+        const content = isItemSelected
+          ? { source: Icon.CircleFilled, tintColor: { light: previewColor, dark: previewColor, adjustContrast: true } }
+          : { color: previewColor };
 
         return (
           <Grid.Item
             key={formattedColor}
-            content={historyItem.title ? { value: { color }, tooltip: historyItem.title } : { color }}
-            title={`${formattedColor} ${historyItem.title ?? ""}`}
+            content={content}
+            title={`${isItemSelected ? "✓ " : ""}${formattedColor} ${historyItem.title ?? ""}`}
             subtitle={new Date(historyItem.date).toLocaleString(undefined, {
               dateStyle: "medium",
               timeStyle: "short",
             })}
-            actions={<Actions historyItem={historyItem} />}
+            actions={<Actions historyItem={historyItem} selection={selection} />}
           />
         );
       })}
@@ -73,12 +79,18 @@ export default function Command() {
   );
 }
 
-function Actions({ historyItem }: { historyItem: HistoryItem }) {
+function Actions({ historyItem, selection }: { historyItem: HistoryItem; selection: UseSelectionReturn }) {
   const { remove, clear, edit } = useHistory();
   const { data: frontmostApp } = usePromise(getFrontmostApplication, []);
 
+  const { toggleSelection, selectAll, clearSelection } = selection.actions;
+  const { anySelected, allSelected, selectedItems, countSelected } = selection.selected;
+  const { getIsItemSelected } = selection.helpers;
+  const isSelected = getIsItemSelected(historyItem);
+
   const color = historyItem.color;
   const formattedColor = getFormattedColor(color);
+
   return (
     <ActionPanel>
       <ActionPanel.Section>
@@ -109,6 +121,44 @@ function Actions({ historyItem }: { historyItem: HistoryItem }) {
           shortcut={Keyboard.Shortcut.Common.Edit}
         />
       </ActionPanel.Section>
+
+      <ActionPanel.Section title="Export Colors to Palettes">
+        <Action
+          icon={isSelected ? Icon.Checkmark : Icon.Circle}
+          title={isSelected ? "Deselect Color" : "Select Color"}
+          shortcut={{ modifiers: ["cmd"], key: "s" }}
+          onAction={() => toggleSelection(historyItem)}
+        />
+        {!allSelected && (
+          <Action
+            icon={Icon.Checkmark}
+            title="Select All Colors"
+            shortcut={{ modifiers: ["cmd", "shift"], key: "a" }}
+            onAction={selectAll}
+          />
+        )}
+        {anySelected && (
+          <Action
+            icon={Icon.XMarkCircle}
+            title="Clear Selection"
+            shortcut={{ modifiers: ["cmd", "shift"], key: "c" }}
+            onAction={clearSelection}
+          />
+        )}
+        {anySelected && (
+          <Action
+            icon={Icon.AppWindowGrid3x3}
+            title={`Export Selected Colors (${countSelected})`}
+            shortcut={{ modifiers: ["cmd", "shift"], key: "p" }}
+            onAction={async () => {
+              await showToast({
+                title: `Export functionality coming soon! Selected ${countSelected} colors.`,
+              });
+            }}
+          />
+        )}
+      </ActionPanel.Section>
+
       <ActionPanel.Section>
         <Action
           icon={Icon.Trash}
