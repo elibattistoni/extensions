@@ -16,7 +16,7 @@ import { showFailureToast, usePromise } from "@raycast/utils";
 import CopyAsSubmenu from "./components/CopyAsSubmenu";
 import { EditTitle } from "./components/EditTitle";
 import { useHistory } from "./history";
-import { HistoryItem, UseSelectionReturn } from "./types";
+import { ColorItem, HistoryItem, UseSelectionReturn } from "./types";
 import { useSelection } from "./useSelection";
 import { getFormattedColor, getPreviewColor } from "./utils";
 
@@ -24,7 +24,17 @@ const preferences: Preferences.OrganizeColors = getPreferenceValues();
 
 export default function Command() {
   const { history } = useHistory();
-  const selection = useSelection(history);
+
+  // Convert HistoryItems to simpler ColorItems for selection
+  const colorItems: ColorItem[] | undefined = history?.map((historyItem) => {
+    const formattedColor = getFormattedColor(historyItem.color);
+    return {
+      id: `${historyItem.date}-${formattedColor}`,
+      color: formattedColor,
+    };
+  });
+
+  const selection = useSelection(colorItems);
 
   return (
     <Grid>
@@ -53,11 +63,14 @@ export default function Command() {
           </ActionPanel>
         }
       />
-      {history?.map((historyItem) => {
-        const formattedColor = getFormattedColor(historyItem.color);
+      {history?.map((historyItem, index) => {
+        const colorItem = colorItems?.[index];
+
+        // Use the formatted color from the colorItem to ensure consistency
+        const formattedColor = colorItem?.color || getFormattedColor(historyItem.color);
         const previewColor = getPreviewColor(historyItem.color);
 
-        const isItemSelected = selection.helpers.getIsItemSelected(historyItem);
+        const isItemSelected = colorItem ? selection.helpers.getIsItemSelected(colorItem) : false;
         const content = isItemSelected
           ? { source: Icon.CircleFilled, tintColor: { light: previewColor, dark: previewColor, adjustContrast: true } }
           : { color: previewColor };
@@ -71,7 +84,15 @@ export default function Command() {
               dateStyle: "medium",
               timeStyle: "short",
             })}
-            actions={<Actions historyItem={historyItem} selection={selection} />}
+            actions={
+              <Actions
+                historyItem={historyItem}
+                colorItem={colorItem}
+                formattedColor={formattedColor}
+                isSelected={isItemSelected}
+                selection={selection}
+              />
+            }
           />
         );
       })}
@@ -79,17 +100,27 @@ export default function Command() {
   );
 }
 
-function Actions({ historyItem, selection }: { historyItem: HistoryItem; selection: UseSelectionReturn }) {
+function Actions({
+  historyItem,
+  colorItem,
+  formattedColor,
+  isSelected,
+  selection,
+}: {
+  historyItem: HistoryItem;
+  colorItem: ColorItem | undefined;
+  formattedColor: string;
+  isSelected: boolean;
+  selection: UseSelectionReturn;
+}) {
   const { remove, clear, edit } = useHistory();
   const { data: frontmostApp } = usePromise(getFrontmostApplication, []);
 
   const { toggleSelection, selectAll, clearSelection } = selection.actions;
   const { anySelected, allSelected, selectedItems, countSelected } = selection.selected;
-  const { getIsItemSelected } = selection.helpers;
-  const isSelected = getIsItemSelected(historyItem);
 
+  // Use the pre-computed values - no redundant calculations!
   const color = historyItem.color;
-  const formattedColor = getFormattedColor(color);
 
   return (
     <ActionPanel>
@@ -127,7 +158,7 @@ function Actions({ historyItem, selection }: { historyItem: HistoryItem; selecti
           icon={isSelected ? Icon.Checkmark : Icon.Circle}
           title={isSelected ? "Deselect Color" : "Select Color"}
           shortcut={{ modifiers: ["cmd"], key: "s" }}
-          onAction={() => toggleSelection(historyItem)}
+          onAction={() => colorItem && toggleSelection(colorItem)}
         />
         {!allSelected && (
           <Action
@@ -151,9 +182,16 @@ function Actions({ historyItem, selection }: { historyItem: HistoryItem; selecti
             title={`Export Selected Colors (${countSelected})`}
             shortcut={{ modifiers: ["cmd", "shift"], key: "p" }}
             onAction={async () => {
-              await showToast({
-                title: `Export functionality coming soon! Selected ${countSelected} colors.`,
-              });
+              const selectedColorsArray = Array.from(selectedItems);
+              try {
+                await launchCommand({
+                  name: "save-color-palette",
+                  type: LaunchType.UserInitiated,
+                  context: { selectedColors: selectedColorsArray },
+                });
+              } catch (e) {
+                await showFailureToast(e);
+              }
             }}
           />
         )}

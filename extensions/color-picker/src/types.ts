@@ -24,6 +24,11 @@ export type HistoryItem = {
   title?: string;
 };
 
+export type ColorItem = {
+  id: string;
+  color: string;
+};
+
 export type LaunchOptions = Parameters<typeof launchCommand>[0];
 
 export type PickColorCommandLaunchProps = LaunchProps<{
@@ -52,20 +57,20 @@ export type ColorFormatType =
   | "p3";
 
 export type UseSelectionActions = {
-  toggleSelection: (item: HistoryItem) => void;
+  toggleSelection: (item: ColorItem) => void;
   selectAll: () => void;
   clearSelection: () => void;
 };
 
 export type UseSelectionState = {
-  selectedItems: Set<HistoryItem>;
+  selectedItems: Set<ColorItem>;
   anySelected: boolean;
   allSelected: boolean;
   countSelected: number;
 };
 
 export type UseSelectionHelpers = {
-  getIsItemSelected: (item: HistoryItem) => boolean;
+  getIsItemSelected: (item: ColorItem) => boolean;
 };
 
 export type UseSelectionReturn = {

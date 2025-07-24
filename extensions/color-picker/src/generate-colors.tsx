@@ -1,7 +1,9 @@
-import { AI, Action, ActionPanel, Grid, LaunchProps } from "@raycast/api";
+import { AI, Action, ActionPanel, Grid, Icon, LaunchProps, LaunchType, launchCommand } from "@raycast/api";
 import { showFailureToast, useAI } from "@raycast/utils";
 import CopyAsSubmenu from "./components/CopyAsSubmenu";
 import { addToHistory } from "./history";
+import { ColorItem, UseSelectionReturn } from "./types";
+import { useSelection } from "./useSelection";
 import { getFormattedColor, getPreviewColor } from "./utils";
 
 export default function GenerateColors(props: LaunchProps<{ arguments: Arguments.GenerateColors }>) {
@@ -32,27 +34,95 @@ JSON colors:`,
     showFailureToast(error, { title: "Could not generate colors, please try again." });
   }
 
+  // Convert colors to ColorItems for selection
+  const colorItems: ColorItem[] = colors.map((c, index) => ({
+    id: index.toString(),
+    color: getFormattedColor(c),
+  }));
+
+  const selection = useSelection(colorItems);
+
   return (
     <Grid columns={5} isLoading={isLoading}>
-      {colors.map((c, index) => {
-        const formattedColor = getFormattedColor(c);
-        const previewColor = getPreviewColor(c);
-        const color = { light: previewColor, dark: previewColor, adjustContrast: false };
+      {colorItems.map((colorItem, index) => {
+        const formattedColor = colorItem.color;
+        const previewColor = getPreviewColor(formattedColor);
+        const isItemSelected = selection.helpers.getIsItemSelected(colorItem);
+        const content = isItemSelected
+          ? { source: Icon.CircleFilled, tintColor: { light: previewColor, dark: previewColor, adjustContrast: true } }
+          : { color: { light: previewColor, dark: previewColor, adjustContrast: false } };
+
         return (
           <Grid.Item
-            key={index}
-            content={{ color }}
-            title={formattedColor}
-            actions={
-              <ActionPanel>
-                <Action.CopyToClipboard content={formattedColor} onCopy={() => addToHistory(formattedColor)} />
-                <Action.Paste content={formattedColor} onPaste={() => addToHistory(formattedColor)} />
-                <CopyAsSubmenu color={formattedColor} onCopy={() => addToHistory(formattedColor)} />
-              </ActionPanel>
-            }
+            key={colorItem.id}
+            content={content}
+            title={`${isItemSelected ? "✓ " : ""}${formattedColor}`}
+            actions={<GenerateColorActions colorItem={colorItem} selection={selection} />}
           />
         );
       })}
     </Grid>
+  );
+}
+
+function GenerateColorActions({ colorItem, selection }: { colorItem: ColorItem; selection: UseSelectionReturn }) {
+  const { toggleSelection, selectAll, clearSelection } = selection.actions;
+  const { anySelected, allSelected, countSelected } = selection.selected;
+  const { getIsItemSelected } = selection.helpers;
+  const isSelected = getIsItemSelected(colorItem);
+  const formattedColor = colorItem.color;
+
+  return (
+    <ActionPanel>
+      <ActionPanel.Section>
+        <Action.CopyToClipboard content={formattedColor} onCopy={() => addToHistory(formattedColor)} />
+        <Action.Paste content={formattedColor} onPaste={() => addToHistory(formattedColor)} />
+        <CopyAsSubmenu color={formattedColor} onCopy={() => addToHistory(formattedColor)} />
+      </ActionPanel.Section>
+
+      <ActionPanel.Section title="Export Colors to Palettes">
+        <Action
+          icon={isSelected ? Icon.Checkmark : Icon.Circle}
+          title={isSelected ? "Deselect Color" : "Select Color"}
+          shortcut={{ modifiers: ["cmd"], key: "s" }}
+          onAction={() => toggleSelection(colorItem)}
+        />
+        {!allSelected && (
+          <Action
+            icon={Icon.Checkmark}
+            title="Select All Colors"
+            shortcut={{ modifiers: ["cmd", "shift"], key: "a" }}
+            onAction={selectAll}
+          />
+        )}
+        {anySelected && (
+          <Action
+            icon={Icon.XMarkCircle}
+            title="Clear Selection"
+            shortcut={{ modifiers: ["cmd", "shift"], key: "c" }}
+            onAction={clearSelection}
+          />
+        )}
+        {countSelected > 1 && (
+          <Action
+            icon={Icon.AppWindowGrid3x3}
+            title={`Export Selected Colors (${countSelected})`}
+            shortcut={{ modifiers: ["cmd", "shift"], key: "p" }}
+            onAction={async () => {
+              const selectedColorsArray = Array.from(selection.selected.selectedItems);
+              try {
+                await launchCommand({
+                  name: "save-color-palette",
+                  type: LaunchType.UserInitiated,
+                  context: { selectedColors: selectedColorsArray },
+                });
+              } catch (e) {
+                await showFailureToast(e);
+              }
+            }}
+          />
+        )}
+      </ActionPanel.Section>
+    </ActionPanel>
   );
 }

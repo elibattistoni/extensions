@@ -1,16 +1,16 @@
 import { useState } from "react";
-import { HistoryItem, UseSelectionReturn } from "./types";
+import { ColorItem, UseSelectionReturn } from "./types";
 
-export function useSelection(items: HistoryItem[] | undefined): UseSelectionReturn {
-  const [selectedItems, setSelectedItems] = useState<Set<HistoryItem>>(new Set());
+export function useSelection(items: ColorItem[] | undefined): UseSelectionReturn {
+  const [selectedItemIds, setSelectedItemIds] = useState<Set<string>>(new Set());
 
-  const toggleSelection = (item: HistoryItem) => {
-    setSelectedItems((prev) => {
+  const toggleSelection = (item: ColorItem) => {
+    setSelectedItemIds((prev) => {
       const newSet = new Set(prev);
-      if (newSet.has(item)) {
-        newSet.delete(item);
+      if (newSet.has(item.id)) {
+        newSet.delete(item.id);
       } else {
-        newSet.add(item);
+        newSet.add(item.id);
       }
       return newSet;
     });
@@ -18,18 +18,21 @@ export function useSelection(items: HistoryItem[] | undefined): UseSelectionRetu
 
   const selectAll = () => {
     if (items) {
-      setSelectedItems(new Set(items));
+      setSelectedItemIds(new Set(items.map((item) => item.id)));
     }
   };
 
   const clearSelection = () => {
-    setSelectedItems(new Set());
+    setSelectedItemIds(new Set());
   };
 
-  const getIsItemSelected = (item: HistoryItem) => selectedItems.has(item);
-  const anySelected = selectedItems.size > 0;
-  const allSelected = items ? selectedItems.size === items.length : false;
-  const countSelected = selectedItems.size;
+  const getIsItemSelected = (item: ColorItem) => selectedItemIds.has(item.id);
+  const anySelected = selectedItemIds.size > 0;
+  const allSelected = items ? selectedItemIds.size === items.length : false;
+  const countSelected = selectedItemIds.size;
+
+  // Convert back to ColorItem Set for compatibility
+  const selectedItems = new Set(items?.filter((item) => selectedItemIds.has(item.id)) || []);
 
   return {
     actions: {
