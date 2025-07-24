@@ -145,7 +145,7 @@ function Actions({ historyItem, selection }: { historyItem: HistoryItem; selecti
             onAction={clearSelection}
           />
         )}
-        {anySelected && (
+        {countSelected > 1 && (
           <Action
             icon={Icon.AppWindowGrid3x3}
             title={`Export Selected Colors (${countSelected})`}

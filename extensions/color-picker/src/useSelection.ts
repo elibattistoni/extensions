@@ -29,7 +29,7 @@ export function useSelection(items: HistoryItem[] | undefined): UseSelectionRetu
   const getIsItemSelected = (item: HistoryItem) => selectedItems.has(item);
   const anySelected = selectedItems.size > 0;
   const allSelected = items ? selectedItems.size === items.length : false;
-  const countSelected = items ? items.length : 0;
+  const countSelected = selectedItems.size;
 
   return {
     actions: {
