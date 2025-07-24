@@ -16,7 +16,7 @@ import { showFailureToast, usePromise } from "@raycast/utils";
 import CopyAsSubmenu from "./components/CopyAsSubmenu";
 import { EditTitle } from "./components/EditTitle";
 import { useHistory } from "./history";
-import { ColorItem, HistoryItem, UseSelectionReturn } from "./types";
+import { ActionProps, ColorItem } from "./types";
 import { useSelection } from "./useSelection";
 import { getFormattedColor, getPreviewColor } from "./utils";
 
@@ -70,8 +70,8 @@ export default function Command() {
         const formattedColor = colorItem?.color || getFormattedColor(historyItem.color);
         const previewColor = getPreviewColor(historyItem.color);
 
-        const isItemSelected = colorItem ? selection.helpers.getIsItemSelected(colorItem) : false;
-        const content = isItemSelected
+        const isSelected = colorItem ? selection.helpers.getIsItemSelected(colorItem) : false;
+        const content = isSelected
           ? { source: Icon.CircleFilled, tintColor: { light: previewColor, dark: previewColor, adjustContrast: true } }
           : { color: previewColor };
 
@@ -79,18 +79,20 @@ export default function Command() {
           <Grid.Item
             key={formattedColor}
             content={content}
-            title={`${isItemSelected ? "✓ " : ""}${formattedColor} ${historyItem.title ?? ""}`}
+            title={`${isSelected ? "✓ " : ""}${formattedColor} ${historyItem.title ?? ""}`}
             subtitle={new Date(historyItem.date).toLocaleString(undefined, {
               dateStyle: "medium",
               timeStyle: "short",
             })}
             actions={
               <Actions
-                historyItem={historyItem}
-                colorItem={colorItem}
-                formattedColor={formattedColor}
-                isSelected={isItemSelected}
-                selection={selection}
+                {...{
+                  historyItem,
+                  colorItem,
+                  formattedColor,
+                  isSelected,
+                  selection,
+                }}
               />
             }
           />
@@ -100,19 +102,7 @@ export default function Command() {
   );
 }
 
-function Actions({
-  historyItem,
-  colorItem,
-  formattedColor,
-  isSelected,
-  selection,
-}: {
-  historyItem: HistoryItem;
-  colorItem: ColorItem | undefined;
-  formattedColor: string;
-  isSelected: boolean;
-  selection: UseSelectionReturn;
-}) {
+function Actions({ historyItem, colorItem, formattedColor, isSelected, selection }: ActionProps) {
   const { remove, clear, edit } = useHistory();
   const { data: frontmostApp } = usePromise(getFrontmostApplication, []);
 

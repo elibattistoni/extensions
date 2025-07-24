@@ -78,3 +78,11 @@ export type UseSelectionReturn = {
   selected: UseSelectionState;
   helpers: UseSelectionHelpers;
 };
+
+export interface ActionProps {
+  historyItem: HistoryItem;
+  colorItem: ColorItem | undefined;
+  formattedColor: string;
+  isSelected: boolean;
+  selection: UseSelectionReturn;
+}
