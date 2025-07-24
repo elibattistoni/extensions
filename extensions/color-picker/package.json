@@ -16,7 +16,8 @@
     "samuelkraft",
     "ridemountainpig",
     "xilopaint",
-    "anwarulislam"
+    "anwarulislam",
+    "elibattistoni"
   ],
   "categories": [
     "Design Tools"
@@ -144,6 +145,20 @@
           "placeholder": "#FF6363"
         }
       ]
+    },
+    {
+      "name": "save-color-palette",
+      "title": "Save Color Palette",
+      "subtitle": "Opens the Color Palette Form",
+      "description": "This command opens the Color Palette Form and fills in the colors automatically with the currently shown colors. You can edit the form and then save it on Local Storage. After submission, you will be redirected to another command that lists all the saved Color Palettes in the Local Storage.",
+      "mode": "view"
+    },
+    {
+      "name": "view-color-palettes",
+      "title": "View Color Palettes",
+      "subtitle": "Opens the list of stored Color Palettes",
+      "description": "This command lists all the Color Palettes that are stored in the Local Storage. It allows to manage the Color Palettes (delete, copy, edit)",
+      "mode": "view"
     }
   ],
   "preferences": [
