@@ -36,21 +36,21 @@ Extends Raycast's Color Picker with professional palette creation and management
 
 ## Quick Usage
 
-### Basic Palette Creation
+### 🚀 **Basic Palette Creation**
 
 1. **From History**: Select colors → ⌘+K → "Save Color Palette"
 2. **From AI**: Generate colors → Select some → ⌘+K → "Save Color Palette"
 3. **Manual**: Open "Save Color Palette" → Fill form
 
-### Keyword Management
+### 🏷️ **Keyword Management**
 
-```
+```text
 ocean, sunset, nature     → Adds 3 keywords
 !old-color, new-color     → Removes "old-color", adds "new-color"
 valid, x, existing-tag    → Adds "valid", warns about "x" and duplicate
 ```
 
-## File Structure
+### 📁 **File Structure Overview**
 
 ```
 src/
@@ -139,7 +139,7 @@ const isSelected = selectedIds.has(item.id);
 | Partial success  | 🟡 Success | "2 keywords updated: 1 invalid skipped"    |
 | Complete success | 🟢 Success | "Keywords added: ocean, sunset"            |
 
-## Troubleshooting
+## 🔧 **Troubleshooting Quick Fixes**
 
 **Selection not working?** → Check if using ID-based tracking  
 **Focus issues?** → Verify race condition prevention  
