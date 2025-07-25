@@ -194,7 +194,7 @@ function Actions({ historyItem, colorItem, formattedColor, isSelected, selection
           <Action
             icon={Icon.XMarkCircle}
             title="Clear Selection"
-            shortcut={{ modifiers: ["cmd", "shift"], key: "c" }}
+            shortcut={{ modifiers: ["cmd", "shift"], key: "z" }}
             onAction={clearSelection}
           />
         )}

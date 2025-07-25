@@ -96,7 +96,6 @@ export function useRealTimeFocus() {
 
   return {
     currentFocusedField,
-    effectiveFocusedField,
     setFocusedField,
     createFocusHandlers,
   };

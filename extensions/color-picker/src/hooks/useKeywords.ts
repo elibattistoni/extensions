@@ -43,9 +43,30 @@
  * // With draft restoration
  * const { keywords, updateKeywords } = useKeywords(savedDraftValues);
  * ```
+ *
+ * **Smart Toast Feedback System:**
+ * The hook returns detailed `KeywordUpdateResult` objects that enable intelligent UI feedback.
+ * Different scenarios trigger appropriate toast messages:
+ *
+ * | Scenario | Toast Type | Example Message |
+ * |----------|-----------|-----------------|
+ * | All invalid | 🔴 Failure | "Invalid keywords: xyz - must be 2-20 chars, alphanumeric + hyphens only" |
+ * | All duplicates | 🟡 Success | "No new keywords: blue, red already exist" |
+ * | Mixed invalid/duplicates | 🔴 Failure | "No keywords updated: 2 invalid, 1 duplicate keywords" |
+ * | Partial success | 🟡 Success | "2 keywords updated: 1 invalid keywords skipped" |
+ * | Complete success (add) | 🟢 Success | "Keywords added: ocean, sunset" |
+ * | Complete success (remove) | 🟢 Success | "Keywords removed: old-tag" |
+ * | Complete success (mixed) | 🟢 Success | "Keywords updated: 2 added, 1 removed" |
+ *
+ * **Enhanced Validation Features:**
+ * - ✅ Precise feedback with no misleading success messages
+ * - ✅ Clear validation error explanations (2-20 chars, alphanumeric + hyphens)
+ * - ✅ Informative duplicate and partial success warnings
+ * - ✅ Detailed success messages showing exact changes made
  */
 import { useLocalStorage } from "@raycast/utils";
-import { PaletteFormFields } from "../types";
+import { KeywordUpdateResult, PaletteFormFields } from "../types";
+import { filterValidKeywords } from "../utils/keywordValidation";
 
 export function useKeywords(draftValues?: PaletteFormFields) {
   // Global keyword storage shared across all palettes
@@ -58,41 +79,58 @@ export function useKeywords(draftValues?: PaletteFormFields) {
    * Processes keyword input string and updates the global keyword list.
    *
    * Parses comma-separated keyword input with support for removal syntax.
-   * Maintains keyword uniqueness and provides clean text processing.
+   * Maintains keyword uniqueness and provides detailed feedback about the operation.
    *
    * @param keywordsText - Comma-separated string of keywords to process
-   * @returns Array of newly added keywords (excludes removed ones)
+   * @returns Object with detailed results of the keyword update operation
    */
-  const updateKeywords = async (keywordsText: string) => {
+  const updateKeywords = async (keywordsText: string): Promise<KeywordUpdateResult> => {
     // Parse and clean input keywords
     const inputKeywords = keywordsText
       .split(",")
       .map((keyword) => keyword.trim())
       .filter(Boolean);
 
-    let newKeywords = [...(keywords ?? [])];
-    // Filter out removal keywords for return value
-    const updatedKeywords = inputKeywords.filter((keyword) => !keyword.startsWith("!"));
+    // Separate add and remove keywords
+    const addKeywords = inputKeywords.filter((k) => !k.startsWith("!"));
+    const removeKeywords = inputKeywords.filter((k) => k.startsWith("!")).map((k) => k.slice(1));
 
-    // Process each keyword: add new ones or remove marked ones
-    inputKeywords.forEach((keyword) => {
-      if (keyword.startsWith("!")) {
-        // Remove keyword - extract the keyword name without the '!' prefix
-        const tagToRemove = keyword.slice(1);
-        newKeywords = newKeywords.filter((existingTag) => existingTag !== tagToRemove);
-      } else {
-        // Add keyword if it doesn't already exist (prevent duplicates)
-        if (!newKeywords.includes(keyword)) {
-          newKeywords.push(keyword);
-        }
+    // Validate add keywords
+    const validAddKeywords = filterValidKeywords(addKeywords);
+    const invalidAddKeywords = addKeywords.filter((k) => !filterValidKeywords([k]).length);
+
+    let newKeywords = [...(keywords ?? [])];
+    const actuallyRemoved: string[] = [];
+
+    // Process removal keywords first
+    removeKeywords.forEach((keyword) => {
+      const beforeLength = newKeywords.length;
+      newKeywords = newKeywords.filter((existingTag) => existingTag !== keyword);
+      if (newKeywords.length < beforeLength) {
+        actuallyRemoved.push(keyword);
       }
+    });
+
+    // Process addition keywords (only valid ones that aren't duplicates)
+    const actuallyAdded = validAddKeywords.filter((keyword) => {
+      if (!newKeywords.includes(keyword)) {
+        newKeywords.push(keyword);
+        return true;
+      }
+      return false;
     });
 
     // Persist updated keywords to storage
     await setKeywords(newKeywords);
 
-    // Return only the newly added keywords for form state synchronization
-    return updatedKeywords;
+    // Return detailed results
+    return {
+      validKeywords: actuallyAdded,
+      invalidKeywords: invalidAddKeywords,
+      removedKeywords: actuallyRemoved,
+      duplicateKeywords: validAddKeywords.filter((k) => !actuallyAdded.includes(k)),
+      totalProcessed: inputKeywords.length,
+    };
   };
 
   return {

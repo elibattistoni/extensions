@@ -69,7 +69,7 @@ export function ColorFieldsSection({
               fieldRefs.current[colorKey] = el;
             }}
             title={`${index + 1}. Color${isRequired ? "*" : ""}`}
-            placeholder="e.g., #FF5733, rgb(255, 87, 51), or rgba(255, 87, 51, 0.8)"
+            placeholder="e.g., #FF5733, #F57, #1E90FF"
             autoFocus={shouldFocus}
             onFocus={focusHandlers.onFocus}
             onBlur={focusHandlers.onBlur}

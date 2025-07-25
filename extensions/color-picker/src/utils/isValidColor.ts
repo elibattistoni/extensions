@@ -1,37 +1,34 @@
 /**
  * Color validation utilities for the Color Palette Storage extension.
  *
- * This module provides robust color format validation supporting multiple
- * common color representations used in web development and design tools.
+ * This module provides robust HEX color format validation for palette creation.
+ * Only HEX colors are supported to ensure consistency across the application.
  */
 
 /**
- * Validates whether a string represents a valid color in supported formats.
+ * Validates whether a string represents a valid HEX color format.
  *
- * Supports the most common color formats used in web development:
+ * Supports standard HEX color formats used in web development:
  * - Hex: #RGB or #RRGGBB (case-insensitive)
- * - RGB: rgb(r, g, b) with values 0-255
- * - RGBA: rgba(r, g, b, a) with RGB 0-255 and alpha 0-1
  *
  * **Validation Features:**
  * - Handles whitespace and case variations
- * - Validates numeric ranges for RGB values (0-255)
- * - Validates alpha channel range (0-1, including decimals)
- * - Rejects malformed or empty inputs
  * - Supports both 3-digit and 6-digit hex formats
+ * - Rejects malformed or empty inputs
+ * - Strict validation ensuring only valid hex characters (0-9, A-F)
  *
  * @param color - The color string to validate
- * @returns True if the color is in a valid format, false otherwise
+ * @returns True if the color is in a valid HEX format, false otherwise
  *
  * @example
  * ```typescript
- * isValidColor("#FF5733");           // true (hex)
- * isValidColor("#f57");              // true (short hex)
- * isValidColor("rgb(255, 87, 51)");  // true (rgb)
- * isValidColor("rgba(255, 87, 51, 0.8)"); // true (rgba)
- * isValidColor("invalid");           // false
- * isValidColor("");                  // false
- * isValidColor("rgb(256, 0, 0)");    // false (out of range)
+ * isValidColor("#FF5733");           // true (6-digit hex)
+ * isValidColor("#f57");              // true (3-digit hex)
+ * isValidColor("#FFF");              // true (3-digit hex)
+ * isValidColor("FF5733");            // false (missing #)
+ * isValidColor("#GG5733");           // false (invalid hex characters)
+ * isValidColor("rgb(255, 87, 51)");  // false (not hex format)
+ * isValidColor("");                  // false (empty)
  * ```
  */
 export const isValidColor = (color: string): boolean => {
@@ -41,36 +38,9 @@ export const isValidColor = (color: string): boolean => {
   const trimmedColor = color.trim();
   if (!trimmedColor) return false;
 
-  // Regular expressions for supported color formats
+  // Regular expression for HEX color format only
   const hexPattern = /^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$/;
-  const rgbPattern = /^rgb\(\s*(\d{1,3})\s*,\s*(\d{1,3})\s*,\s*(\d{1,3})\s*\)$/;
-  const rgbaPattern = /^rgba\(\s*(\d{1,3})\s*,\s*(\d{1,3})\s*,\s*(\d{1,3})\s*,\s*(0|1|0?\.\d+)\s*\)$/;
 
   // Validate hex format (both #RGB and #RRGGBB)
-  if (hexPattern.test(trimmedColor)) return true;
-
-  // Validate RGB format with range checking (0-255 for each channel)
-  const rgbMatch = trimmedColor.match(rgbPattern);
-  if (rgbMatch) {
-    const [, r, g, b] = rgbMatch;
-    return [r, g, b].every((val) => {
-      const num = parseInt(val, 10);
-      return num >= 0 && num <= 255;
-    });
-  }
-
-  // Validate RGBA format with range checking (RGB: 0-255, Alpha: 0-1)
-  const rgbaMatch = trimmedColor.match(rgbaPattern);
-  if (rgbaMatch) {
-    const [, r, g, b, a] = rgbaMatch;
-    const rgbValid = [r, g, b].every((val) => {
-      const num = parseInt(val, 10);
-      return num >= 0 && num <= 255;
-    });
-    const alphaValid = parseFloat(a) >= 0 && parseFloat(a) <= 1;
-    return rgbValid && alphaValid;
-  }
-
-  // No valid format matched
-  return false;
+  return hexPattern.test(trimmedColor);
 };

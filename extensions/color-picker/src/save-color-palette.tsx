@@ -1,5 +1,6 @@
 import { Form, Icon } from "@raycast/api";
 import { useForm } from "@raycast/utils";
+import { useMemo } from "react";
 import { ColorFieldsSection } from "./components/ColorFieldsSection";
 import { ColorPaletteActions } from "./components/ColorPaletteActions";
 import { KeywordsSection } from "./components/KeywordsSection";
@@ -17,15 +18,16 @@ export default function Command(props: PaletteFormProps) {
   const AIprompt = props.launchContext?.text || "";
 
   // Initialize form fields with proper priority: 1. draftValues, 2. selectedColors, 3. defaults
-  const initializeFormValues = (): PaletteFormFields => {
+  // Memoized to prevent unnecessary recalculations on re-renders
+  const initialValues = useMemo((): PaletteFormFields => {
     // Start with a fresh copy of default values to avoid mutations
-    const initialValues: PaletteFormFields = { ...CLEAR_FORM_VALUES };
+    const values: PaletteFormFields = { ...CLEAR_FORM_VALUES };
 
     // Priority 1: Use draft values if available (highest priority)
     if (draftValues) {
       // Safely copy all draft values
-      Object.assign(initialValues, draftValues);
-      return initialValues;
+      Object.assign(values, draftValues);
+      return values;
     }
 
     // Priority 2: Use selected colors if no draft values
@@ -33,26 +35,24 @@ export default function Command(props: PaletteFormProps) {
       // Handle AI prompt for name/description if available
       if (AIprompt) {
         if (AIprompt.length < 16) {
-          initialValues.name = AIprompt;
+          values.name = AIprompt;
         } else {
-          initialValues.description = AIprompt;
+          values.description = AIprompt;
         }
       }
 
       // Set color fields from selected colors
       selectedColors.forEach((color, index) => {
         const colorKey = `color${index + 1}`;
-        (initialValues as any)[colorKey] = color.color;
+        (values as any)[colorKey] = color.color;
       });
 
-      return initialValues;
+      return values;
     }
 
     // Priority 3: Return defaults (safety net - should rarely happen)
-    return initialValues;
-  };
-
-  const initialValues = initializeFormValues();
+    return values;
+  }, [draftValues, selectedColors, AIprompt]);
   const initialColorFieldCount = Object.keys(initialValues).filter((key) => key.startsWith("color")).length;
 
   // === State Management Hooks ===
@@ -68,7 +68,7 @@ export default function Command(props: PaletteFormProps) {
   const { submitPalette } = usePaletteSubmission();
 
   /** Tracks currently focused form field and manages draft restoration */
-  const { currentFocusedField, effectiveFocusedField, createFocusHandlers, setFocusedField } = useRealTimeFocus();
+  const { currentFocusedField, createFocusHandlers, setFocusedField } = useRealTimeFocus();
 
   // === Form Management ===
   // Raycast's form hook with custom validation and submission handling
@@ -131,9 +131,21 @@ export default function Command(props: PaletteFormProps) {
   /**
    * Adds a new color field and focuses on it for immediate input.
    *
-   * **Important:** Uses pre-calculated field ID to avoid race conditions with React state updates.
-   * The colorFieldCount state may not be updated immediately after addColorField() is called,
-   * so we calculate the new field ID synchronously before the state update.
+   * **Race Condition Prevention:** Uses pre-calculated field ID to avoid race conditions
+   * with React state updates. React state updates are asynchronous, so if we calculated
+   * the field ID after calling addColorField(), we might read the old colorFieldCount value.
+   *
+   * **Example of the race condition:**
+   * ```tsx
+   * // ❌ PROBLEMATIC: Race condition
+   * addColorField(); // Triggers setColorFieldCount(3 => 4)
+   * // colorFieldCount might still be 3 here (old value)
+   * const fieldId = `color${colorFieldCount + 1}`; // Could be "color4" instead of "color4"
+   *
+   * // ✅ FIXED: Pre-calculate before state update
+   * const fieldId = `color${colorFieldCount + 1}`; // Always correct
+   * addColorField(); // State update happens after calculation
+   * ```
    */
   const handleAddColorField = () => {
     // Calculate the new field ID before state update to avoid race conditions
@@ -171,8 +183,9 @@ export default function Command(props: PaletteFormProps) {
    * Handles keyword input parsing and form state updates.
    */
   const handleUpdateKeywords = async (keywordsText: string) => {
-    const updatedKeywords = await updateKeywords(keywordsText);
-    setFormValues("keywords", (prev: string[]) => [...prev, ...updatedKeywords]);
+    const result = await updateKeywords(keywordsText);
+    setFormValues("keywords", (prev: string[]) => [...prev, ...result.validKeywords]);
+    return result;
   };
 
   return (

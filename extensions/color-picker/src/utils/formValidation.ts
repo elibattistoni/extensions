@@ -57,14 +57,14 @@ export function createValidationRules(colorCount: number) {
           return "At least one color is required";
         }
         if (!isValidColor(value)) {
-          return "Please enter a valid color (hex, rgb, or rgba)";
+          return "Please enter a valid HEX color (e.g., #FF5733 or #F57)";
         }
       };
     } else {
       // Additional color fields: optional but must be valid if provided
       rules[colorKey] = (value: string) => {
         if (value && !isValidColor(value)) {
-          return "Please enter a valid color (hex, rgb, or rgba)";
+          return "Please enter a valid HEX color (e.g., #FF5733 or #F57)";
         }
       };
     }

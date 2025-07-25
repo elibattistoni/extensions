@@ -130,7 +130,7 @@ function Actions({ colorItem, selection, prompt }: GenerateColorsActionsProps) {
           <Action
             icon={Icon.XMarkCircle}
             title="Clear Selection"
-            shortcut={{ modifiers: ["cmd", "shift"], key: "c" }}
+            shortcut={{ modifiers: ["cmd", "shift"], key: "z" }}
             onAction={clearSelection}
           />
         )}

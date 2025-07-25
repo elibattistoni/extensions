@@ -7,20 +7,7 @@
 
 import { Form, showToast, Toast } from "@raycast/api";
 import { useState } from "react";
-
-/**
- * Props interface for the KeywordsSection component.
- */
-interface KeywordsSectionProps {
-  /** Array of available keywords from global storage */
-  keywords: string[] | undefined;
-  /** Form item properties from Raycast's useForm hook */
-  itemProps: any;
-  /** Function to update the global keywords list and form state */
-  updateKeywords: (keywordsText: string) => Promise<void>;
-  /** Function to create focus handlers for real-time tracking */
-  createFocusHandlers?: (fieldName: string) => { onFocus: () => void; onBlur: () => void };
-}
+import { KeywordsSectionProps } from "../types";
 
 /**
  * Renders keyword management with tag picker and text input.
@@ -33,16 +20,76 @@ export function KeywordsSection({ keywords, itemProps, updateKeywords, createFoc
   const [updateKeywordsValue, setUpdateKeywordsValue] = useState("");
 
   /**
-   * Combined handler for keyword updates and focus tracking.
+   * Combined handler for keyword updates with smart toast feedback.
+   * Shows different toast messages based on the actual results of the operation.
    */
   const handleKeywordUpdateAndBlur = async () => {
     if (updateKeywordsValue.trim()) {
-      await updateKeywords(updateKeywordsValue);
-      showToast({
-        style: Toast.Style.Success,
-        title: "Keywords list successfully updated!",
-        message: "",
-      });
+      const result = await updateKeywords(updateKeywordsValue);
+
+      // Determine toast type and message based on results
+      const { validKeywords, invalidKeywords, removedKeywords, duplicateKeywords, totalProcessed } = result;
+
+      const totalSuccessful = validKeywords.length + removedKeywords.length;
+      const hasInvalid = invalidKeywords.length > 0;
+      const hasDuplicates = duplicateKeywords.length > 0;
+
+      if (totalSuccessful === 0 && totalProcessed > 0) {
+        // All keywords were invalid or duplicates
+        if (hasInvalid && hasDuplicates) {
+          showToast({
+            style: Toast.Style.Failure,
+            title: "No keywords updated",
+            message: `${invalidKeywords.length} invalid, ${duplicateKeywords.length} duplicate keywords`,
+          });
+        } else if (hasInvalid) {
+          showToast({
+            style: Toast.Style.Failure,
+            title: "Invalid keywords",
+            message: `${invalidKeywords.join(", ")} - must be 2-20 chars, alphanumeric + hyphens only`,
+          });
+        } else if (hasDuplicates) {
+          showToast({
+            style: Toast.Style.Success,
+            title: "No new keywords",
+            message: `${duplicateKeywords.join(", ")} already exist`,
+          });
+        }
+      } else if (totalSuccessful > 0 && (hasInvalid || hasDuplicates)) {
+        // Partial success
+        showToast({
+          style: Toast.Style.Success,
+          title: `${totalSuccessful} keywords updated`,
+          message: hasInvalid
+            ? `${invalidKeywords.length} invalid keywords skipped`
+            : `${duplicateKeywords.length} duplicates skipped`,
+        });
+      } else if (totalSuccessful > 0) {
+        // Complete success
+        const addedCount = validKeywords.length;
+        const removedCount = removedKeywords.length;
+
+        if (addedCount > 0 && removedCount > 0) {
+          showToast({
+            style: Toast.Style.Success,
+            title: "Keywords updated",
+            message: `${addedCount} added, ${removedCount} removed`,
+          });
+        } else if (addedCount > 0) {
+          showToast({
+            style: Toast.Style.Success,
+            title: "Keywords added",
+            message: `${validKeywords.join(", ")}`,
+          });
+        } else if (removedCount > 0) {
+          showToast({
+            style: Toast.Style.Success,
+            title: "Keywords removed",
+            message: `${removedKeywords.join(", ")}`,
+          });
+        }
+      }
+
       setUpdateKeywordsValue("");
     }
   };

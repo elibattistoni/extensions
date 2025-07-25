@@ -130,3 +130,36 @@ export type StoredPalette = {
   /** ISO timestamp of when the palette was created */
   createdAt: string;
 };
+
+/**
+ * Result object returned by keyword update operations.
+ *
+ * Provides detailed feedback about what happened during keyword processing,
+ * including successful additions, validation failures, duplicates, and removals.
+ */
+export type KeywordUpdateResult = {
+  /** Keywords that were successfully added (valid and not duplicates) */
+  validKeywords: string[];
+  /** Keywords that failed validation */
+  invalidKeywords: string[];
+  /** Keywords that were successfully removed */
+  removedKeywords: string[];
+  /** Valid keywords that were already in the list */
+  duplicateKeywords: string[];
+  /** Total number of keywords processed */
+  totalProcessed: number;
+};
+
+/**
+ * Props interface for the KeywordsSection component.
+ */
+export type KeywordsSectionProps = {
+  /** Array of available keywords from global storage */
+  keywords: string[] | undefined;
+  /** Form item properties from Raycast's useForm hook */
+  itemProps: any;
+  /** Function to update the global keywords list and form state */
+  updateKeywords: (keywordsText: string) => Promise<KeywordUpdateResult>;
+  /** Function to create focus handlers for real-time tracking */
+  createFocusHandlers?: (fieldName: string) => { onFocus: () => void; onBlur: () => void };
+};
