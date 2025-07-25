@@ -67,9 +67,6 @@ export function useRealTimeFocus() {
     focusedFieldRef.current = fieldId;
   }, []);
 
-  // Get the effective focused field (current if available, otherwise last)
-  const effectiveFocusedField = currentFocusedField || lastFocusedField;
-
   /**
    * Creates onFocus and onBlur handlers for a specific form field.
    *
