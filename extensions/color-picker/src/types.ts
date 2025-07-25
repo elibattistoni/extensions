@@ -79,10 +79,54 @@ export type UseSelectionReturn = {
   helpers: UseSelectionHelpers;
 };
 
-export interface ActionProps {
+export type OrganizeColorsActionsProps = {
   historyItem: HistoryItem;
   colorItem: ColorItem | undefined;
   formattedColor: string;
   isSelected: boolean;
   selection: UseSelectionReturn;
+};
+
+export type GenerateColorsActionsProps = {
+  colorItem: ColorItem;
+  selection: UseSelectionReturn;
+  prompt: string;
+};
+
+export type PaletteFormFields = {
+  /** Display name for the color palette */
+  name: string;
+  /** Optional description of the palette's purpose or theme */
+  description: string;
+  /** Visual mode the palette is designed for */
+  mode: string;
+  /** Array of tags/keywords for organization and search */
+  keywords: string[];
+  /** Dynamic color fields with numbered keys (color1, color2, etc.) */
+  [key: `color${number}`]: string;
+};
+
+export interface PaletteFormProps extends LaunchProps {
+  launchContext?: {
+    selectedColors?: ColorItem[];
+    text?: string;
+  };
+  draftValues?: PaletteFormFields;
 }
+
+export type StoredPalette = {
+  /** Unique identifier (timestamp-based for simplicity) */
+  id: string;
+  /** Display name for the color palette */
+  name: string;
+  /** Optional description of the palette's purpose or theme */
+  description: string;
+  /** Visual mode the palette is designed for (strictly typed) */
+  mode: "light" | "dark";
+  /** Array of tags/keywords for organization and search */
+  keywords: string[];
+  /** Array of hex color codes in the palette */
+  colors: string[];
+  /** ISO timestamp of when the palette was created */
+  createdAt: string;
+};

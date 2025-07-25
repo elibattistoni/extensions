@@ -2,11 +2,13 @@ import { AI, Action, ActionPanel, Grid, Icon, LaunchProps, LaunchType, launchCom
 import { showFailureToast, useAI } from "@raycast/utils";
 import CopyAsSubmenu from "./components/CopyAsSubmenu";
 import { addToHistory } from "./history";
-import { ColorItem, UseSelectionReturn } from "./types";
-import { useSelection } from "./useSelection";
+import { useSelection } from "./hooks/useSelection";
+import { ColorItem, GenerateColorsActionsProps } from "./types";
 import { getFormattedColor, getPreviewColor } from "./utils";
 
 export default function GenerateColors(props: LaunchProps<{ arguments: Arguments.GenerateColors }>) {
+  const { prompt } = props.arguments;
+
   const { data, isLoading } = useAI(
     `Generate colors based on a prompt.
 
@@ -19,7 +21,7 @@ Examples:
 - ["#0000CD","#0000FF","#1E90FF"]
 - ["#FF0000","#FF6347","#FF7F50","#FF8C00","#FFA07A","#FFA500","#FFD700","#FFDEAD","#FFE4B5","#FFE4C4"]
 
-Prompt: ${props.arguments.prompt}
+Prompt: ${prompt}
 JSON colors:`,
     {
       model: AI.Model.OpenAI_GPT4o,
@@ -57,7 +59,7 @@ JSON colors:`,
             key={colorItem.id}
             content={content}
             title={`${isItemSelected ? "✓ " : ""}${formattedColor}`}
-            actions={<GenerateColorActions colorItem={colorItem} selection={selection} />}
+            actions={<Actions colorItem={colorItem} selection={selection} prompt={prompt} />}
           />
         );
       })}
@@ -65,7 +67,17 @@ JSON colors:`,
   );
 }
 
-function GenerateColorActions({ colorItem, selection }: { colorItem: ColorItem; selection: UseSelectionReturn }) {
+/**
+ * Action panel component for generated color items.
+ *
+ * Provides copy/paste actions, selection management, and palette export functionality
+ * for AI-generated colors. Integrates with the selection system and palette creation flow.
+ *
+ * @param colorItem - The color item this action panel applies to
+ * @param selection - Selection state and actions from useSelection hook
+ * @param prompt - Original AI prompt used for color generation (passed to palette form)
+ */
+function Actions({ colorItem, selection, prompt }: GenerateColorsActionsProps) {
   const { toggleSelection, selectAll, clearSelection } = selection.actions;
   const { anySelected, allSelected, countSelected } = selection.selected;
   const { getIsItemSelected } = selection.helpers;
@@ -81,6 +93,25 @@ function GenerateColorActions({ colorItem, selection }: { colorItem: ColorItem; 
       </ActionPanel.Section>
 
       <ActionPanel.Section title="Export Colors to Palettes">
+        {countSelected > 0 && (
+          <Action
+            icon={Icon.AppWindowGrid3x3}
+            title={`Export Selected Color${countSelected > 1 ? "s" : ""} (${countSelected})`}
+            shortcut={{ modifiers: ["cmd", "shift"], key: "p" }}
+            onAction={async () => {
+              const selectedColorsArray = Array.from(selection.selected.selectedItems);
+              try {
+                await launchCommand({
+                  name: "save-color-palette",
+                  type: LaunchType.UserInitiated,
+                  context: { selectedColors: selectedColorsArray, text: prompt },
+                });
+              } catch (e) {
+                await showFailureToast(e);
+              }
+            }}
+          />
+        )}
         <Action
           icon={isSelected ? Icon.Checkmark : Icon.Circle}
           title={isSelected ? "Deselect Color" : "Select Color"}
@@ -101,25 +132,6 @@ function GenerateColorActions({ colorItem, selection }: { colorItem: ColorItem; 
             title="Clear Selection"
             shortcut={{ modifiers: ["cmd", "shift"], key: "c" }}
             onAction={clearSelection}
-          />
-        )}
-        {countSelected > 1 && (
-          <Action
-            icon={Icon.AppWindowGrid3x3}
-            title={`Export Selected Colors (${countSelected})`}
-            shortcut={{ modifiers: ["cmd", "shift"], key: "p" }}
-            onAction={async () => {
-              const selectedColorsArray = Array.from(selection.selected.selectedItems);
-              try {
-                await launchCommand({
-                  name: "save-color-palette",
-                  type: LaunchType.UserInitiated,
-                  context: { selectedColors: selectedColorsArray },
-                });
-              } catch (e) {
-                await showFailureToast(e);
-              }
-            }}
           />
         )}
       </ActionPanel.Section>

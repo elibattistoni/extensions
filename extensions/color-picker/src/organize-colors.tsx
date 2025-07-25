@@ -16,8 +16,8 @@ import { showFailureToast, usePromise } from "@raycast/utils";
 import CopyAsSubmenu from "./components/CopyAsSubmenu";
 import { EditTitle } from "./components/EditTitle";
 import { useHistory } from "./history";
-import { ActionProps, ColorItem } from "./types";
-import { useSelection } from "./useSelection";
+import { useSelection } from "./hooks/useSelection";
+import { ColorItem, OrganizeColorsActionsProps } from "./types";
 import { getFormattedColor, getPreviewColor } from "./utils";
 
 const preferences: Preferences.OrganizeColors = getPreferenceValues();
@@ -102,7 +102,20 @@ export default function Command() {
   );
 }
 
-function Actions({ historyItem, colorItem, formattedColor, isSelected, selection }: ActionProps) {
+/**
+ * Action panel component for color history items.
+ *
+ * Provides comprehensive actions for color management including copy/paste, editing,
+ * selection for palette creation, and deletion. Integrates with history management
+ * and the selection system for seamless palette workflow.
+ *
+ * @param historyItem - The original history item containing color and metadata
+ * @param colorItem - Simplified color item for selection (may be undefined)
+ * @param formattedColor - Pre-computed formatted color string for display/copy
+ * @param isSelected - Pre-computed selection state to avoid redundant calculations
+ * @param selection - Selection state and actions from useSelection hook
+ */
+function Actions({ historyItem, colorItem, formattedColor, isSelected, selection }: OrganizeColorsActionsProps) {
   const { remove, clear, edit } = useHistory();
   const { data: frontmostApp } = usePromise(getFrontmostApplication, []);
 
@@ -144,6 +157,25 @@ function Actions({ historyItem, colorItem, formattedColor, isSelected, selection
       </ActionPanel.Section>
 
       <ActionPanel.Section title="Export Colors to Palettes">
+        {countSelected > 0 && (
+          <Action
+            icon={Icon.AppWindowGrid3x3}
+            title={`Export Selected Color${countSelected > 1 ? "s" : ""} (${countSelected})`}
+            shortcut={{ modifiers: ["cmd", "shift"], key: "p" }}
+            onAction={async () => {
+              const selectedColorsArray = Array.from(selectedItems);
+              try {
+                await launchCommand({
+                  name: "save-color-palette",
+                  type: LaunchType.UserInitiated,
+                  context: { selectedColors: selectedColorsArray },
+                });
+              } catch (e) {
+                await showFailureToast(e);
+              }
+            }}
+          />
+        )}
         <Action
           icon={isSelected ? Icon.Checkmark : Icon.Circle}
           title={isSelected ? "Deselect Color" : "Select Color"}
@@ -164,25 +196,6 @@ function Actions({ historyItem, colorItem, formattedColor, isSelected, selection
             title="Clear Selection"
             shortcut={{ modifiers: ["cmd", "shift"], key: "c" }}
             onAction={clearSelection}
-          />
-        )}
-        {countSelected > 1 && (
-          <Action
-            icon={Icon.AppWindowGrid3x3}
-            title={`Export Selected Colors (${countSelected})`}
-            shortcut={{ modifiers: ["cmd", "shift"], key: "p" }}
-            onAction={async () => {
-              const selectedColorsArray = Array.from(selectedItems);
-              try {
-                await launchCommand({
-                  name: "save-color-palette",
-                  type: LaunchType.UserInitiated,
-                  context: { selectedColors: selectedColorsArray },
-                });
-              } catch (e) {
-                await showFailureToast(e);
-              }
-            }}
           />
         )}
       </ActionPanel.Section>
