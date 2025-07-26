@@ -21,6 +21,14 @@ Extends Raycast's Color Picker with professional palette creation and management
 - Dynamic color fields (add/remove as needed)
 - Auto-focus and draft restoration
 
+### ✏️ **Palette Management**
+
+- **View Palettes**: Browse saved palettes with search and filtering
+- **Edit Palettes**: Modify existing palettes while preserving creation date
+- **Duplicate Palettes**: Create variations with "(Copy)" suffix
+- **Delete Palettes**: Remove unwanted palettes with confirmation
+- **Smart Navigation**: Context-aware navigation prevents command loops
+
 ### 🏷️ **Smart Keywords**
 
 - Global keyword storage shared across palettes
@@ -42,6 +50,14 @@ Extends Raycast's Color Picker with professional palette creation and management
 2. **From AI**: Generate colors → Select some → ⌘+K → "Save Color Palette"
 3. **Manual**: Open "Save Color Palette" → Fill form
 
+### ✏️ **Palette Management Workflow**
+
+1. **View Palettes**: Open "View Color Palettes" command
+2. **Edit**: Select palette → ⌘+E → Edit form → Submit → Returns to main Raycast
+3. **Duplicate**: Select palette → ⌘+D → Creates copy with "(Copy)" suffix
+4. **Delete**: Select palette → ⌘+⇧+D → Confirms deletion
+5. **Search**: Type in search bar to filter by name, description, or keywords
+
 ### 🏷️ **Keyword Management**
 
 ```text
@@ -54,7 +70,8 @@ valid, x, existing-tag    → Adds "valid", warns about "x" and duplicate
 
 ```
 src/
-├── save-color-palette.tsx           # Main form
+├── save-color-palette.tsx           # Main form (create & edit)
+├── view-color-palettes.tsx         # Palette browser with management actions
 ├── components/
 │   ├── KeywordsSection.tsx         # Keyword UI with dual interface
 │   ├── ColorFieldsSection.tsx     # Dynamic color fields
@@ -63,7 +80,7 @@ src/
 │   ├── useSelection.ts             # Multi-selection (ID-based)
 │   ├── useKeywords.ts             # Global keyword management
 │   ├── useColorFields.ts          # Dynamic field management
-│   ├── usePaletteSubmission.ts    # Form submission logic
+│   ├── usePaletteSubmission.ts    # Form submission with context-aware navigation
 │   └── useRealTimeFocus.ts        # Focus tracking for UX
 └── types.ts                       # All type definitions
 ```
@@ -93,6 +110,13 @@ Each hook has single responsibility:
 - Race condition prevention
 - Efficient state management
 - Stale closure prevention with refs
+
+### 🧭 **Smart Navigation Patterns**
+
+- **Editing Flow**: view-palettes → Action.Push → edit form → popToRoot() → main Raycast
+- **Creation Flow**: organize/generate → launchCommand → create form → navigate to view-palettes
+- **Context Detection**: Uses `isNestedContext` to prevent "Command cannot launch itself" errors
+- **Draft Management**: Disabled for editing to prevent unwanted state persistence
 
 ## Common Patterns
 

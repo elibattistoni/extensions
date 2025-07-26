@@ -1,12 +1,8 @@
-import { Action, ActionPanel, Detail, Icon, Keyboard, List, showToast, Toast } from "@raycast/api";
+import { Action, ActionPanel, Icon, Keyboard, LaunchType, List, showToast, Toast } from "@raycast/api";
 import { useLocalStorage } from "@raycast/utils";
 import { useEffect, useState } from "react";
+import SaveColorPaletteCommand from "./save-color-palette";
 import { StoredPalette } from "./types";
-import { formatDate } from "./utils/formatDate";
-
-//>>> WIP
-//>>> TODO ELISA add command that calls the Convert Colors command from color picker
-//>> TODO command that uses the name colors from the color picker extension to name the colors
 
 /**
  * Creates a markdown overview for palette preview in list view.
@@ -17,42 +13,6 @@ const createMdOverview = (palette: StoredPalette) => {
 
 **Description:** ${palette.description}
 `;
-};
-
-/**
- * Creates detailed markdown view with color swatches and metadata.
- */
-const createMdDetails = (palette: StoredPalette) => {
-  // Create visual color swatches using inline HTML for better presentation
-  const colorSwatches = palette.colors
-    .map(
-      (color) =>
-        `<div style="width: 50px; height: 50px; background-color: ${color}; display: inline-block; margin-right: 10px; border-radius: 4px;"></div>`,
-    )
-    .join("");
-
-  // Create numbered list of color codes for easy copying
-  const colorList = palette.colors.map((color, index) => `${index + 1}. \`${color}\``).join("\n");
-
-  return `
-# ${palette.name}
-
-**Mode:** ${palette.mode === "dark" ? "Dark Color Palette" : "Light Color Palette"}
-
-**Description:** ${palette.description}
-
-**Keywords:** ${palette.keywords && palette.keywords.length > 0 ? palette.keywords.join(", ") : "No keywords"}
-
-**Created:** ${formatDate(palette.createdAt)}
-
-**Colors (${palette.colors.length}):**
-
-${colorList}
----
-
-### Color Palette
-${colorSwatches}
-    `;
 };
 
 /**
@@ -100,8 +60,6 @@ export default function Command() {
     }
   }, [searchText, colorPalettes]);
 
-  useEffect(() => {}, [searchText]);
-
   /**
    * Deletes a palette from local storage with user feedback.
    */
@@ -126,14 +84,37 @@ export default function Command() {
   };
 
   /**
-   * Converts stored palette into form data for editing or duplication.
+   * Creates form data for editing an existing palette.
+   * Includes the editingPaletteId to enable overwrite functionality.
    */
-  const createEditableFormData = (palette: StoredPalette, isDuplicate = false) => {
+  const createEditFormData = (palette: StoredPalette) => {
     const formData: any = {
-      name: isDuplicate ? `${palette.name} (Copy)` : palette.name,
+      name: palette.name,
       description: palette.description,
       mode: palette.mode,
       keywords: palette.keywords || [],
+      editingPaletteId: palette.id, // This tells the form to overwrite instead of create new
+    };
+
+    // Add color fields
+    palette.colors.forEach((color, index) => {
+      formData[`color${index + 1}`] = color;
+    });
+
+    return formData;
+  };
+
+  /**
+   * Creates form data for duplicating a palette.
+   * Same as original but with "(Copy)" suffix and no editingPaletteId.
+   */
+  const createDuplicateFormData = (palette: StoredPalette) => {
+    const formData: any = {
+      name: `${palette.name} (Copy)`,
+      description: palette.description,
+      mode: palette.mode,
+      keywords: palette.keywords || [],
+      // No editingPaletteId = creates new palette
     };
 
     // Add color fields
@@ -198,14 +179,11 @@ export default function Command() {
             }
             actions={
               <ActionPanel>
-                {/* 
-                //>> TODO ELISA add Action
-                // instead of showing the details, open a link to coolors to see the palette
-                // you have to convert all the colors to hex format automatically
-
-                TODO add action that converts the colors (using the Color Picker)
-                */}
-                <Action.Push title="Show Palette Details" target={<Detail markdown={createMdDetails(palette)} />} />
+                <Action.OpenInBrowser
+                  title="Open in Coolors"
+                  url={`https://coolors.co/${palette.colors.map((color) => color.replace("#", "")).join("-")}`}
+                  icon={Icon.Globe}
+                />
                 <Action.CopyToClipboard
                   title="Copy All Colors"
                   content={palette.colors.join(";")}
@@ -219,35 +197,34 @@ export default function Command() {
                     shortcut={{ modifiers: ["cmd", "shift"], key: String(idx + 1) as Keyboard.KeyEquivalent }}
                   />
                 ))}
-                {/* 
-                //>>> TODO ELISA check that the two commands below work as expected
-                */}
 
-                {/* NB edit palette actually creates a new copy of an existing palette: fix this */}
-                {/* <Action.Push
-                  title="Edit Palette (Create Copy)"
+                {/* EDIT PALETTE */}
+                <Action.Push
+                  title="Edit Palette"
                   target={
-                    <SaveColorPalettesCommand
+                    <SaveColorPaletteCommand
                       launchType={LaunchType.UserInitiated}
                       arguments={{}}
-                      draftValues={createEditableFormData(palette, true)}
+                      draftValues={createEditFormData(palette)}
                     />
                   }
                   icon={Icon.Pencil}
                   shortcut={{ modifiers: ["cmd"], key: "e" }}
                 />
+
+                {/* DUPLICATE PALETTE */}
                 <Action.Push
                   title="Duplicate Palette"
                   target={
-                    <SaveColorPalettesCommand
+                    <SaveColorPaletteCommand
                       launchType={LaunchType.UserInitiated}
                       arguments={{}}
-                      draftValues={createEditableFormData(palette, true)}
+                      draftValues={createDuplicateFormData(palette)}
                     />
                   }
                   icon={Icon.Duplicate}
                   shortcut={{ modifiers: ["cmd"], key: "d" }}
-                /> */}
+                />
 
                 <Action
                   title="Delete Palette"

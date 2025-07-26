@@ -8,12 +8,13 @@
 2. [Architecture](#architecture)
 3. [Core Components](#core-components)
 4. [Custom Hooks](#custom-hooks)
-5. [Type System](#type-system)
-6. [Validation System](#validation-system)
-7. [User Experience Features](#user-experience-features)
-8. [Implementation Patterns](#implementation-patterns)
-9. [Troubleshooting](#troubleshooting)
-10. [Code Examples](#code-examples)
+5. [Navigation Patterns](#navigation-patterns)
+6. [Type System](#type-system)
+7. [Validation System](#validation-system)
+8. [User Experience Features](#user-experience-features)
+9. [Implementation Patterns](#implementation-patterns)
+10. [Troubleshooting](#troubleshooting)
+11. [Code Examples](#code-examples)
 
 ---
 
@@ -31,6 +32,8 @@ The Color Palette System extends Raycast's Color Picker extension with comprehen
 - ✅ **Real-Time Focus Tracking** - Enhanced UX with dynamic focus management
 - ✅ **Race Condition Prevention** - Robust state management with proper async handling
 - ✅ **Draft Restoration** - Seamless form state persistence
+- ✅ **Palette Management** - Browse, edit, duplicate, and delete saved palettes
+- ✅ **Context-Aware Navigation** - Smart navigation preventing command launch loops
 
 ---
 
@@ -50,7 +53,8 @@ The system follows **separation of concerns** principles with:
 
 ```
 src/
-├── save-color-palette.tsx           # Main form component
+├── save-color-palette.tsx           # Main form component (create & edit)
+├── view-color-palettes.tsx         # Palette browser with management
 ├── components/
 │   ├── KeywordsSection.tsx         # Keyword management UI
 │   ├── ColorFieldsSection.tsx     # Dynamic color fields
@@ -59,7 +63,7 @@ src/
 │   ├── useSelection.ts             # Multi-color selection logic
 │   ├── useKeywords.ts             # Global keyword management
 │   ├── useColorFields.ts          # Dynamic field management
-│   ├── usePaletteSubmission.ts    # Form submission logic
+│   ├── usePaletteSubmission.ts    # Form submission with navigation
 │   └── useRealTimeFocus.ts        # Focus tracking
 ├── types.ts                       # Centralized type definitions
 ├── utils/
@@ -202,6 +206,44 @@ _[SCREENSHOT PLACEHOLDER: KeywordsSection showing tag picker and text input]_
 
 _[SCREENSHOT PLACEHOLDER: ColorFieldsSection with multiple color fields]_
 
+### 4. view-color-palettes.tsx
+
+**Purpose**: Palette browser and management interface
+
+**Key Features**:
+
+- **Search and Filtering**: Filter palettes by name, description, or keywords
+- **Palette Actions**: Edit, duplicate, delete, and copy operations
+- **Keyboard Shortcuts**: ⌘+E (edit), ⌘+D (duplicate), ⌘+⇧+D (delete)
+- **Coolors Integration**: Direct links to open palettes in Coolors.co
+- **Detailed View**: Palette metadata with color previews and tag lists
+
+**Action Patterns**:
+
+```tsx
+// Edit: Use Action.Push for nested context
+<Action.Push
+  title="Edit Palette"
+  target={<SaveColorPaletteCommand draftValues={createEditFormData(palette)} />}
+  icon={Icon.Pencil}
+  shortcut={{ modifiers: ["cmd"], key: "e" }}
+/>;
+
+// Duplicate: Create copy with modified name
+const createDuplicateFormData = (palette) => ({
+  ...palette,
+  name: `${palette.name} (Copy)`,
+  // No editingPaletteId = creates new palette
+});
+```
+
+**Edit vs Duplicate Flow**:
+
+- **Edit**: Includes `editingPaletteId` → Updates existing palette → Returns to main Raycast
+- **Duplicate**: No `editingPaletteId` → Creates new palette → Navigates to view-palettes
+
+_[SCREENSHOT PLACEHOLDER: view-color-palettes showing search and action menu]_
+
 ---
 
 ## Custom Hooks
@@ -301,14 +343,46 @@ const updateKeywords = async (keywordsText: string): Promise<KeywordUpdateResult
 
 ### 4. usePaletteSubmission.ts
 
-**Purpose**: Encapsulates palette submission logic
+**Purpose**: Encapsulates palette submission logic with context-aware navigation
 
 **Key Features**:
 
-- Form data transformation
-- Local storage persistence
-- Success/error handling
-- Post-submission cleanup
+- Form data transformation and validation
+- Local storage persistence (create vs update)
+- Context-aware navigation patterns
+- Success/error handling with detailed feedback
+- Prevention of command launch loops
+
+**Navigation Logic**:
+
+```tsx
+// Editing workflow (from view-palettes via Action.Push)
+if (formValues.editingPaletteId) {
+  // Update existing palette
+  await setStoredPalettes(updatedPalettes);
+  showToast({ title: "Updated!" });
+  await popToRoot(); // Return to main Raycast interface
+  return;
+}
+
+// Creation workflow (direct launch or from organize/generate)
+const newPalette = {
+  /* ... */
+};
+await setStoredPalettes([newPalette, ...existing]);
+onSubmit(); // Clean up form
+
+// Navigate only if not in nested context (prevents "Command cannot launch itself")
+if (!isNestedContext) {
+  await launchCommand({ name: "view-color-palettes" });
+}
+```
+
+**Context Detection**:
+
+- `isNestedContext`: Prevents navigation loops when editing from view-palettes
+- `editingPaletteId`: Distinguishes between create and update operations
+- Uses `popToRoot()` for editing to return to main Raycast interface
 
 ### 5. useRealTimeFocus.ts
 
@@ -345,41 +419,109 @@ const createFocusHandlers = useCallback(
 ### Core Types Overview
 
 ```tsx
-// Color selection types
-export type ColorItem = {
-  id: string;
-  color: string; // HEX format
-};
 
-// Form data structure
-export type PaletteFormFields = {
-  name: string;
-  description: string;
-  mode: string;
-  keywords: string[];
-  [key: `color${number}`]: string; // Dynamic color fields
-};
+```
 
-// Storage format
-export type StoredPalette = {
-  id: string;
-  name: string;
-  description: string;
-  mode: "light" | "dark"; // Strictly typed
-  keywords: string[];
-  colors: string[]; // Array format for storage
-  createdAt: string; // ISO timestamp
-};
+---
 
-// Keyword operation results
-export type KeywordUpdateResult = {
-  validKeywords: string[];
-  invalidKeywords: string[];
-  removedKeywords: string[];
-  duplicateKeywords: string[];
-  totalProcessed: number;
+## Navigation Patterns
+
+The system implements sophisticated navigation patterns to provide seamless user experience while preventing Raycast command loops.
+
+### Navigation Context Types
+
+1. **Direct Launch**: User opens save-color-palette from command palette
+2. **Export from Organize/Generate**: User selects colors and exports to new palette
+3. **Edit from View**: User edits existing palette via Action.Push from view-color-palettes
+
+### Context-Aware Navigation Logic
+
+```tsx
+// In usePaletteSubmission.ts
+const submitPalette = async ({ isNestedContext = false }) => {
+  if (formValues.editingPaletteId) {
+    // EDITING: Always return to main Raycast interface
+    await updateExistingPalette();
+    await popToRoot(); // Clean exit to main Raycast
+    return;
+  } else {
+    // CREATING: Context-dependent navigation
+    await createNewPalette();
+
+    if (!isNestedContext) {
+      // Safe to navigate to view-palettes
+      await launchCommand({ name: "view-color-palettes" });
+    }
+    // If nested, just clean up form (caller handles navigation)
+  }
 };
 ```
+
+### Navigation Flow Diagrams
+
+**Editing Workflow**:
+
+```
+view-color-palettes → Action.Push → save-color-palette[edit] → popToRoot() → main Raycast
+```
+
+**Creation from Export**:
+
+```
+organize-colors → launchCommand → save-color-palette[create] → launchCommand → view-color-palettes
+```
+
+**Direct Creation**:
+
+```
+command palette → save-color-palette[create] → launchCommand → view-color-palettes
+```
+
+### Preventing Command Loops
+
+**Problem**: "Command cannot launch itself" error occurs when:
+
+- User is in save-color-palette (launched from view-palettes)
+- System tries to launch view-color-palettes
+- Raycast detects potential infinite loop
+
+**Solution**: `isNestedContext` parameter:
+
+```tsx
+// In save-color-palette.tsx
+const isEditing = Boolean(draftValues?.editingPaletteId);
+
+await submitPalette({
+  formValues: submissionValues,
+  colorCount: colorFieldCount,
+  onSubmit: handleClearForm,
+  isNestedContext: isEditing, // Prevents navigation when editing
+});
+```
+
+### Draft Management Context
+
+```tsx
+// Disable drafts for editing to prevent state conflicts
+<Form enableDrafts={!isEditing}>
+```
+
+**Rationale**:
+
+- **Creating**: Drafts help preserve user input during multi-step creation
+- **Editing**: Drafts would conflict with the passed `draftValues` containing palette data
+
+---
+
+## Type System
+
+### Core Types Overview
+
+```tsx
+
+```
+
+````
 
 ### Selection System Types
 
@@ -400,7 +542,7 @@ export type UseSelectionReturn = {
     getIsItemSelected: (item: ColorItem) => boolean;
   };
 };
-```
+````
 
 ---
 

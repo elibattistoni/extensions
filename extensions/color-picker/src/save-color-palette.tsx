@@ -17,6 +17,11 @@ export default function Command(props: PaletteFormProps) {
   const selectedColors = props.launchContext?.selectedColors || [];
   const AIprompt = props.launchContext?.text || "";
 
+  // Check if we're in editing mode (nested context)
+  // isEditing is also used to detect if we're in a nested context where we shouldn't navigate
+  // This includes editing (Action.Push from view-palettes) but NOT organize-colors/generate-colors
+  const isEditing = Boolean(draftValues?.editingPaletteId);
+
   // Initialize form fields with proper priority: 1. draftValues, 2. selectedColors, 3. defaults
   // Memoized to prevent unnecessary recalculations on re-renders
   const initialValues = useMemo((): PaletteFormFields => {
@@ -80,11 +85,18 @@ export default function Command(props: PaletteFormProps) {
     values,
   } = useForm<PaletteFormFields>({
     async onSubmit(values) {
-      // Submit palette with simplified object-based API
+      // Submit palette with context information to prevent navigation loops
+      // IMPORTANT: Manually add editingPaletteId if we're in editing mode
+      const submissionValues = {
+        ...values,
+        ...(isEditing && draftValues?.editingPaletteId ? { editingPaletteId: draftValues.editingPaletteId } : {}),
+      };
+
       await submitPalette({
-        formValues: values,
+        formValues: submissionValues,
         colorCount: colorFieldCount,
         onSubmit: handleClearForm,
+        isNestedContext: isEditing, // Prevent navigation loops when editing from view-palettes
       });
     },
     validation: createValidationRules(colorFieldCount),
@@ -199,9 +211,9 @@ export default function Command(props: PaletteFormProps) {
           colorFieldCount={colorFieldCount}
         />
       }
-      enableDrafts
+      enableDrafts={!isEditing} // Disable drafts in nested forms (when editing)
     >
-      <Form.Description text="Create a new Color Palette" />
+      <Form.Description text={isEditing ? "Edit Color Palette" : "Create a new Color Palette"} />
       <Form.TextField
         {...itemProps.name}
         title="Name*"

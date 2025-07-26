@@ -102,6 +102,8 @@ export type PaletteFormFields = {
   mode: string;
   /** Array of tags/keywords for organization and search */
   keywords: string[];
+  /** Optional ID of palette being edited (for overwrite functionality) */
+  editingPaletteId?: string;
   /** Dynamic color fields with numbered keys (color1, color2, etc.) */
   [key: `color${number}`]: string;
 };

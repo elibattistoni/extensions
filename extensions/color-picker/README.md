@@ -7,7 +7,9 @@ A simple system-wide color picker. The color picker can be triggered with a stan
 - Pick a color on your desktop
 - Access your colors from the menu bar
 - Organize your colors
-- Generate colors using UI
+- Generate colors using AI
+- Create and manage color palettes
+- Edit existing color palettes
 - Pick a color using AI
 - Pick a color with color wheel
 - Convert any color to a different format
@@ -120,7 +122,10 @@ Raycast's Color Picker doesn't rely on complex commands \- it's all about simpli
 
 1. `pick-color`: This launches the main color picker interface.
 2. `color-wheel`: Opens the interactive color wheel for precise hue selection.
-3. `organize-colors`: Allows you to manage and categorize your color palettes.
+3. `organize-colors`: Allows you to manage and organize your picked colors.
+4. `save-color-palette`: Create and edit custom color palettes.
+5. `view-color-palettes`: Browse, edit, and manage your saved color palettes.
+6. `generate-colors`: Use AI to generate color palettes based on prompts.
 
 Pro tip: These commands can be customized or aliased in your Raycast preferences for even quicker access.
 
@@ -132,5 +137,36 @@ Raycast's Color Picker tool is a powerhouse of functionality. Here's a breakdown
 2. **Format Flexibility**: The picked color is immediately available in multiple formats \- HEX, RGB, HSL, and CMYK. Convert between these with a single click.
 3. **Color Wheel**: Fine-tune your selection using the interactive color wheel, adjusting hue, saturation, and brightness.
 4. **AI Integration**: Leverage machine learning to generate complementary colors or entire palettes based on your picked color.
-5. **Cross-App Compatibility**: Thanks to our API, the Color Picker can seamlessly interact with other Raycast extensions.
-6. **Clipboard Integration**: Copy picked colors directly to your clipboard for instant use in design apps or code editors.
+5. **Palette Management**: Create, edit, and organize custom color palettes with names, descriptions, and keywords for easy searching.
+6. **Cross-App Compatibility**: Thanks to our API, the Color Picker can seamlessly interact with other Raycast extensions.
+7. **Clipboard Integration**: Copy picked colors directly to your clipboard for instant use in design apps or code editors.
+
+## **Color Palette Management**
+
+The Color Picker extension includes powerful palette management features:
+
+### **Creating Palettes**
+
+- Use the `save-color-palette` command to create new palettes
+- Export selected colors from `organize-colors` or `generate-colors` directly to a new palette
+- Add names, descriptions, and keywords for easy organization
+- Support for both light and dark palette modes
+
+### **Managing Palettes**
+
+- Browse all palettes with the `view-color-palettes` command
+- Edit existing palettes while preserving their original creation date
+- Duplicate palettes to create variations
+- Delete palettes you no longer need
+- Search through palettes by name, description, or keywords
+
+### **Integration Features**
+
+- Seamless workflow from color generation/organization to palette creation
+- Copy individual colors or entire palette sets to clipboard
+- Open palettes directly in Coolors.co for web-based editing
+- Keyboard shortcuts for quick actions (⌘+E to edit, ⌘+D to duplicate, etc.)
+
+```
+
+```

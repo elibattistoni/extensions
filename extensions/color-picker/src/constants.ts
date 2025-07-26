@@ -35,6 +35,8 @@ export const CLEAR_FORM_VALUES: PaletteFormFields = {
   mode: DEFAULT_MODE,
   /** Default empty keywords array */
   keywords: DEFAULT_KEYWORDS,
+  /** Default editing palette ID (undefined for new palettes) */
+  editingPaletteId: undefined,
   /** Default first color field (empty) */
   color1: DEFAULT_COLOR,
 };
