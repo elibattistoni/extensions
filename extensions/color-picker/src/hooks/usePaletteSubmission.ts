@@ -4,72 +4,31 @@ import { PaletteFormFields, StoredPalette } from "../types";
 import { extractColorValues } from "../utils/formHelpers";
 
 /**
- * Custom hook for handling color palette submission and persistence logic.
+ * Hook for color palette submission and persistence operations.
  *
- * This hook encapsulates all the complex operations required to save a color palette,
- * including local storage management, data transformation, user feedback, and navigation.
- * It provides a clean interface for form components to submit palette data without
- * handling the underlying storage and navigation complexity.
+ * Encapsulates complex palette save operations including local storage management,
+ * data transformation, user feedback, and navigation. Handles both creation and editing
+ * with context-aware navigation to prevent command launch loops.
  *
- * **Responsibilities:**
- * - Handles both creating new palettes and editing existing ones
- * - Extracts and validates color values from form data
- * - Transforms form data into persistable storage format
- * - Manages local storage operations for palette persistence
- * - Generates unique IDs and timestamps for new palettes
- * - Updates existing palettes while preserving original metadata
- * - Provides user feedback through toast notifications
- * - Handles context-aware navigation: returns to main Raycast interface for edits, navigates to palette list for new palettes (when not in nested context)
- * - Prevents "Command cannot launch itself" errors by avoiding navigation loops in nested contexts
- * - Manages error handling and recovery for failed submissions
- * - Executes success callbacks for form cleanup operations
+ * **Key Features:**
+ * - Creates new palettes or updates existing ones based on editingPaletteId
+ * - Extracts color values from form data and generates storage format
+ * - Provides user feedback via toast notifications with specific success/error messages
+ * - Manages navigation: returns to main interface for edits, navigates to palette list for new items
+ * - Prevents navigation loops in nested contexts (Action.Push scenarios)
  *
- * **Integration Points:**
- * - Uses Raycast's local storage utilities for data persistence
- * - Integrates with Raycast's toast system for user notifications
- * - Handles navigation between extension commands (for new palettes)
- * - Coordinates with form components through callback functions
- *
- * @returns An object containing:
- * - `submitPalette`: Async function to save a palette and handle all side effects
+ * @returns Object with `submitPalette` function for handling form submission
  *
  * @example
  * ```typescript
- * // Creating a new palette
  * const { submitPalette } = usePaletteSubmission();
  *
- * const handleSubmit = async (formValues: PaletteFormFields) => {
- *   await submitPalette({
- *     formValues,
- *     colorCount: 3,
- *     onSubmit: () => form.reset()
- *   });
- * };
- * ```
- *
- * @example
- * ```typescript
- * // Editing an existing palette
- * const handleSubmit = async (formValues: PaletteFormFields) => {
- *   await submitPalette({
- *     formValues: { ...formValues, editingPaletteId: "123" },
- *     colorCount: 3,
- *     onSubmit: () => form.reset()
- *   });
- * };
- * ```
- *
- * @example
- * ```typescript
- * // Example of data transformation:
- * // Input: { name: "Sunset", mode: "light", color1: "#FF5733", color2: "#FFC300" }
- * // Output: StoredPalette {
- * //   id: "1642584000000",
- * //   name: "Sunset",
- * //   mode: "light",
- * //   colors: ["#FF5733", "#FFC300"],
- * //   createdAt: "2025-01-19T10:00:00.000Z"
- * // }
+ * await submitPalette({
+ *   formValues: { name: "Ocean", colors: ["#2E86AB"] },
+ *   colorCount: 1,
+ *   onSubmit: () => form.reset(),
+ *   isNestedContext: false
+ * });
  * ```
  */
 export function usePaletteSubmission() {
@@ -81,34 +40,22 @@ export function usePaletteSubmission() {
   );
 
   /**
-   * Submits a color palette by saving it to local storage and handling all side effects.
+   * Saves a color palette to local storage with comprehensive error handling.
    *
-   * This function orchestrates the entire submission process including data transformation,
-   * persistence, user feedback, navigation, and error handling. It ensures data consistency
-   * and provides a smooth user experience during palette creation.
+   * Orchestrates the entire submission process: data transformation, persistence,
+   * user feedback, and context-aware navigation. Handles both palette creation
+   * and editing operations seamlessly.
    *
-   * **Process Flow:**
-   * 1. Extract color values from form data based on color count
-   * 2. Check if editing existing palette (based on editingPaletteId)
-   * 3a. For editing: Update existing palette in storage, show success toast, return to main Raycast interface
-   * 3b. For creation: Transform form data into storage format, generate unique ID and timestamp
-   * 4. For creation: Prepend new palette to existing list, persist to local storage
-   * 5. For creation: Show success notification, execute form cleanup
-   * 6. For creation: Navigate to palette list (only if not in nested context to prevent command launch loops)
-   * 7. Handle any errors with user-friendly messages
-   *
-   * @param params - Object containing all submission parameters
-   * @param params.formValues - The validated form data containing palette information
+   * @param params - Submission parameters
+   * @param params.formValues - Validated form data containing palette information
    * @param params.colorCount - Number of color fields to extract from form data
-   * @param params.onSubmit - Callback function executed after successful save (for form cleanup)
-   * @param params.isNestedContext - Whether the form is in a nested context (Action.Push) to prevent navigation loops
-   *
-   * @throws Will catch and handle any storage or navigation errors internally
+   * @param params.onSubmit - Callback executed after successful save for form cleanup
+   * @param params.isNestedContext - Whether form is in nested context to prevent navigation loops
    *
    * @example
    * ```typescript
    * await submitPalette({
-   *   formValues: { name: "Ocean", mode: "light", description: "Beach vibes" },
+   *   formValues: { name: "Sunset", mode: "light", description: "Beach vibes" },
    *   colorCount: 3,
    *   onSubmit: () => form.reset()
    * });

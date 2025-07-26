@@ -1,11 +1,13 @@
-import { Action, ActionPanel, confirmAlert, Icon, Keyboard, LaunchType, List, showToast, Toast } from "@raycast/api";
+import { Action, ActionPanel, Clipboard, confirmAlert, Icon, LaunchType, List, showToast, Toast } from "@raycast/api";
 import { useLocalStorage } from "@raycast/utils";
 import { useCallback, useMemo, useState } from "react";
 import SaveColorPaletteCommand from "./save-color-palette";
 import { PaletteFormData, StoredPalette } from "./types";
+import { ExportFormat, exportPalette, getFileExtension, getFormatDisplayName } from "./utils/exportPalette";
 
 /**
- * Creates a markdown overview for palette preview in list view.
+ * Creates markdown overview for palette preview in list view.
+ * Displays essential palette information in a structured format.
  */
 const createMdOverview = (palette: StoredPalette) => {
   return `
@@ -23,21 +25,20 @@ const createMdOverview = (palette: StoredPalette) => {
  * Color Palette Viewer Command
  *
  * Main interface for viewing, managing, and organizing saved color palettes.
- * Provides search, filtering, and CRUD operations with keyboard shortcuts.
+ * Provides search, filtering, CRUD operations, and export functionality with keyboard shortcuts.
  *
  * **Features:**
- * - Type-safe palette management with proper TypeScript definitions
- * - Performance-optimized search with memoized filtering
+ * - Type-safe palette management with comprehensive TypeScript definitions
+ * - Performance-optimized search with memoized filtering across name, description, and keywords
  * - Enhanced user experience with confirmation dialogs and detailed feedback
- * - Comprehensive error handling for all operations
- * - Memory-efficient rendering with optimized callbacks
+ * - Comprehensive error handling for all operations with graceful recovery
+ * - Memory-efficient rendering with optimized callbacks and memoization
+ * - Multi-format export capabilities (JSON, CSS, CSS Variables, Plain Text)
  *
  * **Architecture:**
  * - Uses React hooks for state management and performance optimization
- * - Implements proper TypeScript types for form data creation
- * - Leverages Raycast's native components for consistent UX
- *
- * @version 2.0.0 - Enhanced with improved type safety and UX
+ * - Implements proper TypeScript types for form data creation and validation
+ * - Leverages Raycast's native components for consistent UX and platform integration
  */
 export default function Command() {
   // === Data Management ===
@@ -55,8 +56,8 @@ export default function Command() {
   // === Search Effect ===
   /**
    * Filters palettes based on search text across multiple fields.
-   * Searches through palette name, description, and keywords for matches.
-   * Memoized for performance optimization.
+   * Searches through palette name, description, and keywords for comprehensive matching.
+   * Uses memoization for optimal performance with large palette collections.
    */
   const filteredPalettes = useMemo(() => {
     if (!colorPalettes || colorPalettes.length === 0) return [];
@@ -73,8 +74,8 @@ export default function Command() {
   }, [searchText, colorPalettes]);
 
   /**
-   * Deletes a palette from local storage with user confirmation and enhanced error handling.
-   * Provides detailed feedback and graceful error recovery.
+   * Deletes a palette from local storage with user confirmation and comprehensive error handling.
+   * Provides detailed feedback and graceful error recovery with specific user messaging.
    */
   const deletePalette = useCallback(
     async (paletteId: string, paletteName: string) => {
@@ -127,7 +128,7 @@ export default function Command() {
 
   /**
    * Creates type-safe form data for editing an existing palette.
-   * Includes the editingPaletteId to enable overwrite functionality.
+   * Includes editingPaletteId to enable overwrite functionality in the form component.
    */
   const createEditFormData = useCallback((palette: StoredPalette): PaletteFormData => {
     const formData: Partial<PaletteFormData> = {
@@ -149,7 +150,7 @@ export default function Command() {
 
   /**
    * Creates type-safe form data for duplicating a palette.
-   * Same as original but with "(Copy)" suffix and no editingPaletteId.
+   * Generates a copy with "(Copy)" suffix and no editingPaletteId for new palette creation.
    */
   const createDuplicateFormData = useCallback((palette: StoredPalette): PaletteFormData => {
     const formData: Partial<PaletteFormData> = {
@@ -167,6 +168,32 @@ export default function Command() {
     });
 
     return formData as PaletteFormData;
+  }, []);
+
+  /**
+   * Handles palette export in the specified format with user feedback.
+   * Copies the exported content to clipboard and shows success notification.
+   */
+  const handleCopyAs = useCallback(async (palette: StoredPalette, format: ExportFormat) => {
+    try {
+      const exportedContent = exportPalette(palette, format);
+      const fileName = `${palette.name.toLowerCase().replace(/[^a-z0-9]/g, "-")}.${getFileExtension(format)}`;
+
+      await Clipboard.copy(exportedContent);
+
+      showToast({
+        style: Toast.Style.Success,
+        title: "Copied to Clipboard",
+        message: `${palette.name} copied as ${getFormatDisplayName(format)} (${fileName})`,
+      });
+    } catch (error) {
+      console.error("Error copying palette:", error);
+      showToast({
+        style: Toast.Style.Failure,
+        title: "Copy Failed",
+        message: `Failed to copy "${palette.name}". Please try again.`,
+      });
+    }
   }, []);
 
   return (
@@ -223,24 +250,36 @@ export default function Command() {
             }
             actions={
               <ActionPanel>
+                {/* COPY SUBMENU */}
+                <ActionPanel.Submenu
+                  title="Copy Palette Colors"
+                  icon={Icon.Download}
+                  shortcut={{ modifiers: ["cmd"], key: "x" }}
+                >
+                  <Action title="Copy as JSON" onAction={() => handleCopyAs(palette, "json")} icon={Icon.Code} />
+                  <Action title="Copy as CSS Classes" onAction={() => handleCopyAs(palette, "css")} icon={Icon.Code} />
+                  <Action
+                    title="Copy as CSS Variables"
+                    onAction={() => handleCopyAs(palette, "css-variables")}
+                    icon={Icon.Code}
+                  />
+                  <Action
+                    title="Copy as Plain Text"
+                    onAction={() => handleCopyAs(palette, "txt")}
+                    icon={Icon.Document}
+                  />
+                  <Action.CopyToClipboard title="Copy All Colors" content={palette.colors.join(";")} />
+                  {palette.colors.map((color, idx) => (
+                    <Action.CopyToClipboard key={idx} title={`Copy Color ${idx + 1}`} content={palette.colors[idx]} />
+                  ))}
+                </ActionPanel.Submenu>
+
                 <Action.OpenInBrowser
                   title="Open in Coolors"
                   url={`https://coolors.co/${palette.colors.map((color) => color.replace("#", "")).join("-")}`}
                   icon={Icon.Globe}
+                  shortcut={{ modifiers: ["cmd"], key: "o" }}
                 />
-                <Action.CopyToClipboard
-                  title="Copy All Colors"
-                  content={palette.colors.join(";")}
-                  shortcut={{ modifiers: ["cmd", "shift"], key: "a" }}
-                />
-                {palette.colors.map((color, idx) => (
-                  <Action.CopyToClipboard
-                    key={idx}
-                    title={`Copy Color ${idx + 1}`}
-                    content={palette.colors[idx]}
-                    shortcut={{ modifiers: ["cmd", "shift"], key: String(idx + 1) as Keyboard.KeyEquivalent }}
-                  />
-                ))}
 
                 {/* EDIT PALETTE */}
                 <Action.Push

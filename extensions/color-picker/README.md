@@ -1,3 +1,5 @@
+# Color Picker Extension
+
 A simple system-wide color picker. The color picker can be triggered with a standalone command or as part of the menu bar command. The menu bar shows the last nine picked colors. The Organize Colors command can be used to see all colors.
 
 [![raycast-cross-extension-badge]][raycast-cross-extension-link]
@@ -10,12 +12,13 @@ A simple system-wide color picker. The color picker can be triggered with a stan
 - Generate colors using AI
 - Create and manage color palettes
 - Edit existing color palettes
+- Export color palettes in multiple formats
 - Pick a color using AI
 - Pick a color with color wheel
 - Convert any color to a different format
 - Get the color name for a hex code
 
-## API
+## Cross-Extension API
 
 This extensions follows [Raycast Cross-Extension Conventions][raycast-cross-extension-link].
 
@@ -81,10 +84,11 @@ await crossLaunchCommand({
 });
 ```
 
-#### Rececive Callback Result
+#### Receive Callback Result
 
 ```typescript
 import { LaunchProps } from "@raycast/api";
+import { useEffect } from "react";
 
 type LaunchContext = {
   hex?: string;
@@ -103,47 +107,9 @@ export default function Command({ launchContext = {} }: LaunchProps<{ launchCont
 
 - [Badges - shields.io](https://raycast.com/litomore/badges) - Concise, consistent, and legible badges
 
-[raycast-cross-extension-link]: https://github.com/LitoMore/raycast-cross-extension-conventions
-[raycast-cross-extension-badge]: https://shields.io/badge/Raycast-Cross--Extension-eee?labelColor=FF6363&logo=raycast&logoColor=fff&style=flat-square
+## Color Palette Management
 
-## **Perfect for Web Development and Beyond**
-
-Whether you're tweaking CSS, fine-tuning gradients, or selecting the perfect hue for your next design project, Color Picker is your go-to tool. From HEX to RGB, HSL to CMYK, we've got all your color values covered.
-
-## **Frequently Asked Questions**
-
-### **How do I activate Color Picker?**
-
-Launching the Color Picker is easy. Simply hit your Raycast hotkey (default is ⌘+Space) and type "color picker" or "pick color". The extension will spring to life, ready to capture any hue on your screen. If you're looking to integrate it with your extension you can trigger the color picker programmatically using the `crossLaunchCommand` function.
-
-### **What is the command for Color Picker?**
-
-Raycast's Color Picker doesn't rely on complex commands \- it's all about simplicity and speed. The primary commands are:
-
-1. `pick-color`: This launches the main color picker interface.
-2. `color-wheel`: Opens the interactive color wheel for precise hue selection.
-3. `organize-colors`: Allows you to manage and organize your picked colors.
-4. `save-color-palette`: Create and edit custom color palettes.
-5. `view-color-palettes`: Browse, edit, and manage your saved color palettes.
-6. `generate-colors`: Use AI to generate color palettes based on prompts.
-
-Pro tip: These commands can be customized or aliased in your Raycast preferences for even quicker access.
-
-### **How does the Color Picker tool work?**
-
-Raycast's Color Picker tool is a powerhouse of functionality. Here's a breakdown of its core operations:
-
-1. **Screen Sampling**: Click anywhere on your screen to instantly capture the color of any pixel.
-2. **Format Flexibility**: The picked color is immediately available in multiple formats \- HEX, RGB, HSL, and CMYK. Convert between these with a single click.
-3. **Color Wheel**: Fine-tune your selection using the interactive color wheel, adjusting hue, saturation, and brightness.
-4. **AI Integration**: Leverage machine learning to generate complementary colors or entire palettes based on your picked color.
-5. **Palette Management**: Create, edit, and organize custom color palettes with names, descriptions, and keywords for easy searching.
-6. **Cross-App Compatibility**: Thanks to our API, the Color Picker can seamlessly interact with other Raycast extensions.
-7. **Clipboard Integration**: Copy picked colors directly to your clipboard for instant use in design apps or code editors.
-
-## **Color Palette Management**
-
-The Color Picker extension includes powerful palette management features:
+The Color Picker extension now includes comprehensive palette management features:
 
 ### **Creating Palettes**
 
@@ -160,12 +126,75 @@ The Color Picker extension includes powerful palette management features:
 - Delete palettes you no longer need
 - Search through palettes by name, description, or keywords
 
-### **Integration Features**
+### Professional Export System
 
-- Seamless workflow from color generation/organization to palette creation
-- Copy individual colors or entire palette sets to clipboard
-- Open palettes directly in Coolors.co for web-based editing
-- Keyboard shortcuts for quick actions (⌘+E to edit, ⌘+D to duplicate, etc.)
+Export your color palettes in multiple formats for different development workflows:
+
+#### Export Formats Available:
+
+- **JSON**: Complete metadata for data interchange
+- **CSS Classes**: Ready-to-use CSS with color and background variants
+- **CSS Variables**: Modern CSS custom properties for design systems
+- **Plain Text**: Human-readable format for documentation
+
+#### Export Examples:
+
+**CSS Variables:**
+
+```css
+:root {
+  --ocean-vibes-1: #2e86ab;
+  --ocean-vibes-2: #a23b72;
+  --ocean-vibes-3: #f18f01;
+}
+```
+
+**CSS Classes:**
+
+```css
+.ocean-vibes-color-1 {
+  color: #2e86ab;
+}
+.ocean-vibes-bg-1 {
+  background-color: #2e86ab;
+}
+```
+
+**JSON:**
+
+```json
+{
+  "name": "Ocean Vibes",
+  "description": "Calm blues and greens inspired by the ocean",
+  "colors": ["#2e86ab", "#a23b72", "#f18f01"],
+  "keywords": ["ocean", "nature", "calm"],
+  "mode": "light"
+}
+```
+
+### Palette Workflow
+
+1. **Pick Colors**: Use existing color picker tools to gather colors
+2. **Create Palette**: Select multiple colors and run "Save Color Palette"
+3. **Add Metadata**: Include name, description, keywords, and theme mode
+4. **Export**: Choose your preferred format (⌘+X) and copy to clipboard
+
+### Integration with Existing Features
+
+- **Color History**: All picked colors are available for palette creation
+- **Menu Bar**: Quick access to recent palettes alongside colors
+- **Cross-Extension API**: Palette operations work with the existing API structure
+
+## Development
+
+For technical implementation details, architecture information, and contribution guidelines, see [docs/DEVELOPER_GUIDE.md](docs/DEVELOPER_GUIDE.md).
+
+## License
+
+MIT
+
+[raycast-cross-extension-link]: https://github.com/LitoMore/raycast-cross-extension-conventions
+[raycast-cross-extension-badge]: https://shields.io/badge/Raycast-Cross--Extension-eee?labelColor=FF6363&logo=raycast&logoColor=fff&style=flat-square
 
 ```
 

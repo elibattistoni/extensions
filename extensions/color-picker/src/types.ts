@@ -134,8 +134,8 @@ export type StoredPalette = {
 };
 
 /**
- * Type-safe form data creation for palette editing and duplication.
- * Extends PaletteFormFields with proper typing for dynamic color fields.
+ * Type-safe form data for palette editing and duplication operations.
+ * Extends base form fields with proper typing for dynamic color fields.
  */
 export type PaletteFormData = PaletteFormFields & {
   /** Dynamic color fields populated from palette colors */
@@ -143,10 +143,8 @@ export type PaletteFormData = PaletteFormFields & {
 };
 
 /**
- * Result object returned by keyword update operations.
- *
- * Provides detailed feedback about what happened during keyword processing,
- * including successful additions, validation failures, duplicates, and removals.
+ * Result object from keyword update operations with detailed feedback.
+ * Provides information about successful additions, validation failures, and duplicates.
  */
 export type KeywordUpdateResult = {
   /** Keywords that were successfully added (valid and not duplicates) */
