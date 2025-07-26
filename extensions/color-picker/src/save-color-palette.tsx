@@ -49,7 +49,8 @@ export default function Command(props: PaletteFormProps) {
       // Set color fields from selected colors
       selectedColors.forEach((color, index) => {
         const colorKey = `color${index + 1}`;
-        (values as any)[colorKey] = color.color;
+        // Type assertion is safe here as we know we're setting color field values
+        (values as Record<string, any>)[colorKey] = color.color;
       });
 
       return values;

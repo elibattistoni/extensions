@@ -132,10 +132,21 @@ export function usePaletteSubmission() {
       // Check if we're editing an existing palette
       if (formValues.editingPaletteId) {
         // UPDATE EXISTING PALETTE
-        const updatedPalettes = (storedPalettes ?? []).map((existingPalette) => {
-          if (existingPalette.id === formValues.editingPaletteId) {
+        // First, verify the palette exists
+        const existingPalette = (storedPalettes ?? []).find((p) => p.id === formValues.editingPaletteId);
+        if (!existingPalette) {
+          showToast({
+            style: Toast.Style.Failure,
+            title: "Error",
+            message: "Palette not found. It may have been deleted.",
+          });
+          return;
+        }
+
+        const updatedPalettes = (storedPalettes ?? []).map((palette) => {
+          if (palette.id === formValues.editingPaletteId) {
             return {
-              ...existingPalette,
+              ...palette,
               name: formValues.name,
               description: formValues.description,
               mode: formValues.mode as "light" | "dark",
@@ -144,7 +155,7 @@ export function usePaletteSubmission() {
               // Keep original ID and createdAt
             };
           }
-          return existingPalette;
+          return palette;
         });
 
         await setStoredPalettes(updatedPalettes);

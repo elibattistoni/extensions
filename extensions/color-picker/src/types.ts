@@ -134,6 +134,15 @@ export type StoredPalette = {
 };
 
 /**
+ * Type-safe form data creation for palette editing and duplication.
+ * Extends PaletteFormFields with proper typing for dynamic color fields.
+ */
+export type PaletteFormData = PaletteFormFields & {
+  /** Dynamic color fields populated from palette colors */
+  [K in `color${number}`]: string;
+};
+
+/**
  * Result object returned by keyword update operations.
  *
  * Provides detailed feedback about what happened during keyword processing,
