@@ -1,34 +1,34 @@
 import { StoredPalette } from "../types";
 
 /**
- * Export palette data in various formats for use in different applications and workflows.
+ * Copy palette data in various formats for use in different applications and workflows.
  */
-export type ExportFormat = "json" | "css" | "txt" | "css-variables";
+export type CopyFormat = "json" | "css" | "txt" | "css-variables";
 
 /**
- * Generates JSON export of palette data with complete metadata.
+ * Generates JSON copy of palette data with complete metadata.
  * Useful for sharing palettes between users or backing up palette data.
  */
-export function exportAsJSON(palette: StoredPalette): string {
-  const exportData = {
+export function copyAsJSON(palette: StoredPalette): string {
+  const copyData = {
     name: palette.name,
     description: palette.description,
     mode: palette.mode,
     keywords: palette.keywords,
     colors: palette.colors,
     createdAt: palette.createdAt,
-    exportedAt: new Date().toISOString(),
-    exportFormat: "JSON",
+    copiedAt: new Date().toISOString(),
+    copyFormat: "JSON",
   };
 
-  return JSON.stringify(exportData, null, 2);
+  return JSON.stringify(copyData, null, 2);
 }
 
 /**
  * Generates CSS color definitions using class selectors.
  * Perfect for integrating palette colors into web projects.
  */
-export function exportAsCSS(palette: StoredPalette): string {
+export function copyAsCSS(palette: StoredPalette): string {
   const sanitizedName = palette.name.toLowerCase().replace(/[^a-z0-9]/g, "-");
 
   let css = `/* ${palette.name} - ${palette.mode} color palette */\n`;
@@ -55,7 +55,7 @@ export function exportAsCSS(palette: StoredPalette): string {
  * Generates CSS custom properties (variables) for modern CSS workflows.
  * Ideal for CSS frameworks and design systems.
  */
-export function exportAsCSSVariables(palette: StoredPalette): string {
+export function copyAsCSSVariables(palette: StoredPalette): string {
   const sanitizedName = palette.name.toLowerCase().replace(/[^a-z0-9]/g, "-");
 
   let css = `/* ${palette.name} - ${palette.mode} color palette */\n`;
@@ -84,7 +84,7 @@ export function exportAsCSSVariables(palette: StoredPalette): string {
  * Generates plain text export with palette information.
  * Good for sharing in documentation, notes, or plain text environments.
  */
-export function exportAsText(palette: StoredPalette): string {
+export function copyAsText(palette: StoredPalette): string {
   let text = `${palette.name.toUpperCase()}\n`;
   text += `${"=".repeat(palette.name.length)}\n\n`;
 
@@ -109,28 +109,28 @@ export function exportAsText(palette: StoredPalette): string {
 }
 
 /**
- * Main export function that handles all format types.
- * Provides a unified interface for palette export operations.
+ * Main copy function that handles all format types.
+ * Provides a unified interface for palette copy operations.
  */
-export function exportPalette(palette: StoredPalette, format: ExportFormat): string {
+export function copyPalette(palette: StoredPalette, format: CopyFormat): string {
   switch (format) {
     case "json":
-      return exportAsJSON(palette);
+      return copyAsJSON(palette);
     case "css":
-      return exportAsCSS(palette);
+      return copyAsCSS(palette);
     case "css-variables":
-      return exportAsCSSVariables(palette);
+      return copyAsCSSVariables(palette);
     case "txt":
-      return exportAsText(palette);
+      return copyAsText(palette);
     default:
-      throw new Error(`Unsupported export format: ${format}`);
+      throw new Error(`Unsupported copy format: ${format}`);
   }
 }
 
 /**
- * Gets the appropriate file extension for an export format.
+ * Gets the appropriate file extension for a format.
  */
-export function getFileExtension(format: ExportFormat): string {
+export function getFileExtension(format: CopyFormat): string {
   switch (format) {
     case "json":
       return "json";
@@ -145,9 +145,9 @@ export function getFileExtension(format: ExportFormat): string {
 }
 
 /**
- * Gets a user-friendly display name for an export format.
+ * Gets a user-friendly display name for a format.
  */
-export function getFormatDisplayName(format: ExportFormat): string {
+export function getFormatDisplayName(format: CopyFormat): string {
   switch (format) {
     case "json":
       return "JSON";

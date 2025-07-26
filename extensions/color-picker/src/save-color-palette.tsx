@@ -2,8 +2,8 @@ import { Form, Icon } from "@raycast/api";
 import { useForm } from "@raycast/utils";
 import { useMemo } from "react";
 import { ColorFieldsSection } from "./components/ColorFieldsSection";
-import { ColorPaletteActions } from "./components/ColorPaletteActions";
 import { KeywordsSection } from "./components/KeywordsSection";
+import { SavePaletteActions } from "./components/SavePaletteActions";
 import { CLEAR_FORM_VALUES } from "./constants";
 import { useColorFields } from "./hooks/useColorFields";
 import { useKeywords } from "./hooks/useKeywords";
@@ -204,7 +204,7 @@ export default function Command(props: PaletteFormProps) {
   return (
     <Form
       actions={
-        <ColorPaletteActions
+        <SavePaletteActions
           handleSubmit={handleSubmit}
           addColor={handleAddColorField}
           removeColor={handleRemoveColorField}

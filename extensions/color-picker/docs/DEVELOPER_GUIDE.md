@@ -16,9 +16,9 @@ src/
 ├── hooks/               # Custom React hooks
 │   └── usePaletteSubmission.ts  # Palette form logic and submission
 ├── utils/               # Utility functions and helpers
-│   └── exportPalette.ts     # Export functionality for multiple formats
+│   └── copyPalette.ts     # Copy functionality for multiple formats
 ├── __tests__/           # Test files
-│   ├── simple-export-tests.ts      # Export functionality tests (15 cases)
+│   ├── simple-export-tests.ts      # Copy functionality tests (15 cases)
 │   └── simple-validation-tests.ts  # Validation logic tests (5 cases)
 ├── [feature-files].tsx # Main feature components
 └── types.ts            # TypeScript type definitions
@@ -166,14 +166,14 @@ _[Screenshot: Palette creation form with validation states]_
 
 #### **Core Files:**
 
-- `src/utils/exportPalette.ts` - Export logic and format generation
+- `src/utils/copyPalette.ts` - Copy logic and format generation
 
 #### **Technical Implementation:**
 
 **Export Architecture:**
 
 ```typescript
-type ExportFormat = "json" | "css" | "css-variables" | "text";
+type CopyFormat = "json" | "css" | "css-variables" | "text";
 
 /**
  * Main export function with format-specific handlers
@@ -181,7 +181,7 @@ type ExportFormat = "json" | "css" | "css-variables" | "text";
  * @param format - Target export format
  * @returns Formatted string ready for clipboard
  */
-export const exportPalette = (palette: StoredPalette, format: ExportFormat): string => {
+export const copyPalette = (palette: StoredPalette, format: CopyFormat): string => {
   switch (format) {
     case "json":
       return exportAsJSON(palette);
@@ -344,7 +344,7 @@ _[Screenshot: Test execution in terminal]_
 
 ```
 src/__tests__/
-├── simple-export-tests.ts      # Export functionality (15 test cases)
+├── simple-export-tests.ts      # Copy functionality (15 test cases)
 └── simple-validation-tests.ts  # Validation logic (5 test cases)
 ```
 
@@ -426,7 +426,7 @@ _[Screenshot: Test execution results]_
 ### **Running Tests**
 
 ```bash
-# Export functionality tests
+# Copy functionality tests
 npx ts-node src/__tests__/simple-export-tests.ts
 
 # Validation tests
@@ -508,7 +508,7 @@ interface StoredPalette {
   updatedAt: Date;
 }
 
-type ExportFormat = "json" | "css" | "css-variables" | "text";
+type CopyFormat = "json" | "css" | "css-variables" | "text";
 
 interface PaletteFormData {
   name: string;
@@ -522,10 +522,9 @@ interface PaletteFormData {
 ### **Utility Functions**
 
 ```typescript
-// Export functionality
-exportPalette(palette: StoredPalette, format: ExportFormat): string
-getFileExtension(format: ExportFormat): string
-getFormatDisplayName(format: ExportFormat): string
+// Copy functionality
+copyPalette(palette: StoredPalette, format: CopyFormat): string
+getFormatDisplayName(format: CopyFormat): string
 
 // Validation
 isValidColor(color: string): boolean

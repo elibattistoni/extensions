@@ -1,9 +1,9 @@
-import { Action, ActionPanel, Clipboard, confirmAlert, Icon, LaunchType, List, showToast, Toast } from "@raycast/api";
+import { Clipboard, confirmAlert, Icon, List, showToast, Toast } from "@raycast/api";
 import { useLocalStorage } from "@raycast/utils";
 import { useCallback, useMemo, useState } from "react";
-import SaveColorPaletteCommand from "./save-color-palette";
+import { ViewPalettesActions } from "./components/ViewPalettesActions";
 import { PaletteFormData, StoredPalette } from "./types";
-import { ExportFormat, exportPalette, getFileExtension, getFormatDisplayName } from "./utils/exportPalette";
+import { CopyFormat, copyPalette, getFormatDisplayName } from "./utils/copyPalette";
 
 /**
  * Creates markdown overview for palette preview in list view.
@@ -25,7 +25,7 @@ const createMdOverview = (palette: StoredPalette) => {
  * Color Palette Viewer Command
  *
  * Main interface for viewing, managing, and organizing saved color palettes.
- * Provides search, filtering, CRUD operations, and export functionality with keyboard shortcuts.
+ * Provides search, filtering, CRUD operations, and copy functionality with keyboard shortcuts.
  *
  * **Features:**
  * - Type-safe palette management with comprehensive TypeScript definitions
@@ -33,7 +33,7 @@ const createMdOverview = (palette: StoredPalette) => {
  * - Enhanced user experience with confirmation dialogs and detailed feedback
  * - Comprehensive error handling for all operations with graceful recovery
  * - Memory-efficient rendering with optimized callbacks and memoization
- * - Multi-format export capabilities (JSON, CSS, CSS Variables, Plain Text)
+ * - Multi-format copy capabilities (JSON, CSS, CSS Variables, Plain Text)
  *
  * **Architecture:**
  * - Uses React hooks for state management and performance optimization
@@ -171,20 +171,19 @@ export default function Command() {
   }, []);
 
   /**
-   * Handles palette export in the specified format with user feedback.
-   * Copies the exported content to clipboard and shows success notification.
+   * Handles palette copy in the specified format with user feedback.
+   * Copies the content to clipboard and shows success notification.
    */
-  const handleCopyAs = useCallback(async (palette: StoredPalette, format: ExportFormat) => {
+  const handleCopyAs = useCallback(async (palette: StoredPalette, format: CopyFormat) => {
     try {
-      const exportedContent = exportPalette(palette, format);
-      const fileName = `${palette.name.toLowerCase().replace(/[^a-z0-9]/g, "-")}.${getFileExtension(format)}`;
+      const copiedContent = copyPalette(palette, format);
 
-      await Clipboard.copy(exportedContent);
+      await Clipboard.copy(copiedContent);
 
       showToast({
         style: Toast.Style.Success,
         title: "Copied to Clipboard",
-        message: `${palette.name} copied as ${getFormatDisplayName(format)} (${fileName})`,
+        message: `${palette.name} copied as ${getFormatDisplayName(format)}`,
       });
     } catch (error) {
       console.error("Error copying palette:", error);
@@ -249,73 +248,13 @@ export default function Command() {
               />
             }
             actions={
-              <ActionPanel>
-                {/* COPY SUBMENU */}
-                <ActionPanel.Submenu
-                  title="Copy Palette Colors"
-                  icon={Icon.Download}
-                  shortcut={{ modifiers: ["cmd"], key: "x" }}
-                >
-                  <Action title="Copy as JSON" onAction={() => handleCopyAs(palette, "json")} icon={Icon.Code} />
-                  <Action title="Copy as CSS Classes" onAction={() => handleCopyAs(palette, "css")} icon={Icon.Code} />
-                  <Action
-                    title="Copy as CSS Variables"
-                    onAction={() => handleCopyAs(palette, "css-variables")}
-                    icon={Icon.Code}
-                  />
-                  <Action
-                    title="Copy as Plain Text"
-                    onAction={() => handleCopyAs(palette, "txt")}
-                    icon={Icon.Document}
-                  />
-                  <Action.CopyToClipboard title="Copy All Colors" content={palette.colors.join(";")} />
-                  {palette.colors.map((color, idx) => (
-                    <Action.CopyToClipboard key={idx} title={`Copy Color ${idx + 1}`} content={palette.colors[idx]} />
-                  ))}
-                </ActionPanel.Submenu>
-
-                <Action.OpenInBrowser
-                  title="Open in Coolors"
-                  url={`https://coolors.co/${palette.colors.map((color) => color.replace("#", "")).join("-")}`}
-                  icon={Icon.Globe}
-                  shortcut={{ modifiers: ["cmd"], key: "o" }}
-                />
-
-                {/* EDIT PALETTE */}
-                <Action.Push
-                  title="Edit Palette"
-                  target={
-                    <SaveColorPaletteCommand
-                      launchType={LaunchType.UserInitiated}
-                      arguments={{}}
-                      draftValues={createEditFormData(palette)}
-                    />
-                  }
-                  icon={Icon.Pencil}
-                  shortcut={{ modifiers: ["cmd"], key: "e" }}
-                />
-
-                {/* DUPLICATE PALETTE */}
-                <Action.Push
-                  title="Duplicate Palette"
-                  target={
-                    <SaveColorPaletteCommand
-                      launchType={LaunchType.UserInitiated}
-                      arguments={{}}
-                      draftValues={createDuplicateFormData(palette)}
-                    />
-                  }
-                  icon={Icon.Duplicate}
-                  shortcut={{ modifiers: ["cmd"], key: "d" }}
-                />
-
-                <Action
-                  title="Delete Palette"
-                  onAction={() => deletePalette(palette.id, palette.name)}
-                  style={Action.Style.Destructive}
-                  shortcut={{ modifiers: ["cmd", "shift"], key: "d" }}
-                />
-              </ActionPanel>
+              <ViewPalettesActions
+                palette={palette}
+                handleCopyAs={handleCopyAs}
+                deletePalette={deletePalette}
+                createEditFormData={createEditFormData}
+                createDuplicateFormData={createDuplicateFormData}
+              />
             }
           />
         ))

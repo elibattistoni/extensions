@@ -1,5 +1,5 @@
 /**
- * ColorPaletteActions Component
+ * SavePaletteActions Component
  *
  * Action panel providing form actions with keyboard shortcuts for color palette creation.
  * Organizes actions logically for efficient workflow management.
@@ -8,9 +8,9 @@
 import { Action, ActionPanel } from "@raycast/api";
 
 /**
- * Props interface for the ColorPaletteActions component.
+ * Props interface for the SavePaletteActions component.
  */
-interface ColorPaletteActionsProps {
+interface SavePaletteActionsProps {
   /** Form submission handler */
   handleSubmit: (values: any) => boolean | void | Promise<boolean | void>;
   /** Function to add a new color field */
@@ -28,13 +28,13 @@ interface ColorPaletteActionsProps {
  *
  * @param props - Component properties containing action handlers and state
  */
-export function ColorPaletteActions({
+export function SavePaletteActions({
   handleSubmit,
   addColor,
   removeColor,
   clearForm,
   colorFieldCount,
-}: ColorPaletteActionsProps) {
+}: SavePaletteActionsProps) {
   return (
     <ActionPanel>
       {/* Primary action: Submit form to save palette */}
