@@ -7,7 +7,21 @@
 
 import { Form, showToast, Toast } from "@raycast/api";
 import { useState } from "react";
-import { KeywordsSectionProps } from "../types";
+import { KeywordUpdateResult } from "../types";
+
+/**
+ * Props interface for the KeywordsSection component.
+ */
+type KeywordsSectionProps = {
+  /** Array of available keywords from global storage */
+  keywords: string[] | undefined;
+  /** Form item properties from Raycast's useForm hook */
+  itemProps: any;
+  /** Function to update the global keywords list and form state */
+  updateKeywords: (keywordsText: string) => Promise<KeywordUpdateResult>;
+  /** Function to create focus handlers for real-time tracking */
+  createFocusHandlers?: (fieldName: string) => { onFocus: () => void; onBlur: () => void };
+};
 
 /**
  * Renders keyword management with tag picker and text input.

@@ -122,7 +122,7 @@ The Color Picker extension now includes comprehensive palette management feature
 
 - Browse all palettes with the `view-color-palettes` command
 - Edit existing palettes while preserving their original creation date
-- Duplicate palettes to create variations
+- Duplicate palettes to create instant copies
 - Delete palettes you no longer need
 - Search through palettes by name, description, or keywords
 

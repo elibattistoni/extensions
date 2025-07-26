@@ -1,9 +1,4 @@
-import { StoredPalette } from "../types";
-
-/**
- * Copy palette data in various formats for use in different applications and workflows.
- */
-export type CopyFormat = "json" | "css" | "txt" | "css-variables";
+import { CopyFormat, StoredPalette } from "../types";
 
 /**
  * Generates JSON copy of palette data with complete metadata.

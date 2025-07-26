@@ -7,8 +7,7 @@
 
 import { Action, ActionPanel, Icon, LaunchType } from "@raycast/api";
 import SaveColorPaletteCommand from "../save-color-palette";
-import { PaletteFormData, StoredPalette } from "../types";
-import { CopyFormat } from "../utils/copyPalette";
+import { PaletteActions, StoredPalette } from "../types";
 
 /**
  * Props interface for the ViewPalettesActions component.
@@ -16,23 +15,12 @@ import { CopyFormat } from "../utils/copyPalette";
 interface ViewPalettesActionsProps {
   /** The palette being viewed */
   palette: StoredPalette;
-  /** Function to handle copying palette in different formats */
-  handleCopyAs: (palette: StoredPalette, format: CopyFormat) => Promise<void>;
-  /** Function to delete a palette */
-  deletePalette: (paletteId: string, paletteName: string) => Promise<void>;
-  /** Function to create edit form data */
-  createEditFormData: (palette: StoredPalette) => PaletteFormData;
-  /** Function to create duplicate form data */
-  createDuplicateFormData: (palette: StoredPalette) => PaletteFormData;
+  /** All palette management actions */
+  actions: PaletteActions;
 }
 
-export function ViewPalettesActions({
-  palette,
-  handleCopyAs,
-  deletePalette,
-  createEditFormData,
-  createDuplicateFormData,
-}: ViewPalettesActionsProps) {
+export function ViewPalettesActions({ palette, actions }: ViewPalettesActionsProps) {
+  const { handleCopyAs, deletePalette, createEditFormData, duplicatePalette } = actions;
   return (
     <ActionPanel>
       {/* COPY SUBMENU */}
@@ -62,7 +50,6 @@ export function ViewPalettesActions({
         icon={Icon.Globe}
       />
 
-      {/* EDIT PALETTE */}
       <Action.Push
         title="Edit Palette"
         target={
@@ -76,16 +63,9 @@ export function ViewPalettesActions({
         shortcut={{ modifiers: ["cmd"], key: "e" }}
       />
 
-      {/* DUPLICATE PALETTE */}
-      <Action.Push
+      <Action
         title="Duplicate Palette"
-        target={
-          <SaveColorPaletteCommand
-            launchType={LaunchType.UserInitiated}
-            arguments={{}}
-            draftValues={createDuplicateFormData(palette)}
-          />
-        }
+        onAction={() => duplicatePalette(palette)}
         icon={Icon.Duplicate}
         shortcut={{ modifiers: ["cmd"], key: "d" }}
       />

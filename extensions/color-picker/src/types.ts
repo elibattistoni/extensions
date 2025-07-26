@@ -134,7 +134,7 @@ export type StoredPalette = {
 };
 
 /**
- * Type-safe form data for palette editing and duplication operations.
+ * Type-safe form data for palette editing operations.
  * Extends base form fields with proper typing for dynamic color fields.
  */
 export type PaletteFormData = PaletteFormFields & {
@@ -159,16 +159,21 @@ export type KeywordUpdateResult = {
   totalProcessed: number;
 };
 
+// === Copy/Export Types ===
+
 /**
- * Props interface for the KeywordsSection component.
+ * Copy palette data in various formats for use in different applications and workflows.
  */
-export type KeywordsSectionProps = {
-  /** Array of available keywords from global storage */
-  keywords: string[] | undefined;
-  /** Form item properties from Raycast's useForm hook */
-  itemProps: any;
-  /** Function to update the global keywords list and form state */
-  updateKeywords: (keywordsText: string) => Promise<KeywordUpdateResult>;
-  /** Function to create focus handlers for real-time tracking */
-  createFocusHandlers?: (fieldName: string) => { onFocus: () => void; onBlur: () => void };
-};
+export type CopyFormat = "json" | "css" | "txt" | "css-variables";
+
+// === Action Types ===
+
+/**
+ * Palette actions interface containing all business logic functions.
+ */
+export interface PaletteActions {
+  handleCopyAs: (palette: StoredPalette, format: CopyFormat) => Promise<void>;
+  deletePalette: (paletteId: string, paletteName: string) => Promise<void>;
+  createEditFormData: (palette: StoredPalette) => PaletteFormData;
+  duplicatePalette: (palette: StoredPalette) => Promise<void>;
+}
