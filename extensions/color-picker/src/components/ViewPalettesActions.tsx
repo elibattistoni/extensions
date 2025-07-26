@@ -49,9 +49,11 @@ export function ViewPalettesActions({
           icon={Icon.CopyClipboard}
         />
         <Action title="Copy as Plain Text" onAction={() => handleCopyAs(palette, "txt")} icon={Icon.CopyClipboard} />
-        {palette.colors.map((_, idx) => (
-          <Action.CopyToClipboard key={idx} title={`Copy Color ${idx + 1}`} content={palette.colors[idx]} />
-        ))}
+        <ActionPanel.Section title="Copy Individual Colors">
+          {palette.colors.map((_, idx) => (
+            <Action.CopyToClipboard key={idx} title={`Copy Color ${idx + 1}`} content={palette.colors[idx]} />
+          ))}
+        </ActionPanel.Section>
       </ActionPanel.Submenu>
 
       <Action.OpenInBrowser

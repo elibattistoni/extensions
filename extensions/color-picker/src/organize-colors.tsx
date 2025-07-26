@@ -127,7 +127,7 @@ function Actions({ historyItem, colorItem, formattedColor, isSelected, selection
 
   return (
     <ActionPanel>
-      <ActionPanel.Section>
+      <ActionPanel.Section title={`Color ${formattedColor}`}>
         {preferences.primaryAction === "copy" ? (
           <>
             <Action.CopyToClipboard content={formattedColor} />
@@ -156,11 +156,11 @@ function Actions({ historyItem, colorItem, formattedColor, isSelected, selection
         />
       </ActionPanel.Section>
 
-      <ActionPanel.Section title="Export Colors to Palettes">
+      <ActionPanel.Section title="Create Color Palette">
         {countSelected > 0 && (
           <Action
             icon={Icon.AppWindowGrid3x3}
-            title={`Export Selected Color${countSelected > 1 ? "s" : ""} (${countSelected})`}
+            title={`Save ${countSelected} Color${countSelected > 1 ? "s" : ""} as Palette`}
             shortcut={{ modifiers: ["cmd", "shift"], key: "p" }}
             onAction={async () => {
               const selectedColorsArray = Array.from(selectedItems);
@@ -178,7 +178,7 @@ function Actions({ historyItem, colorItem, formattedColor, isSelected, selection
         )}
         <Action
           icon={isSelected ? Icon.Checkmark : Icon.Circle}
-          title={isSelected ? "Deselect Color" : "Select Color"}
+          title={isSelected ? `Deselect Color ${formattedColor}` : `Select Color ${formattedColor}`}
           shortcut={{ modifiers: ["cmd"], key: "s" }}
           onAction={() => colorItem && toggleSelection(colorItem)}
         />
