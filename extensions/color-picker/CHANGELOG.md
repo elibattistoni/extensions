@@ -2,10 +2,10 @@
 
 ## [Multi-Color Selection] - {PR_MERGE_DATE}
 
-- Add a Single/Multi select mode toggle to the search bar of `Organize Colors` and `Generate Colors`
-- In multi-select mode, switch to a list view with a checkmark prefix on selected colors
-- Copy selected colors as JSON, CSS Classes, or CSS Variables from the action panel
-- Selection persists when switching between modes
+- Add multi-color selection to `Organize Colors` and `Generate Colors`, available in both Grid and List views
+- Select a focused color with `⌘S`, select all with `⌘⇧A`, clear selection with `⌘⇧Z`; selected colors are prefixed with a checkmark
+- Bulk-copy selected colors as plain text, JSON, CSS Classes, or CSS Variables (`⌘⇧⏎`)
+- Toggle between Grid and List view from the action panel (`⌘⇧L`); selection persists across the toggle
 
 ## [Windows: Enhancement] - 2026-02-13
 
