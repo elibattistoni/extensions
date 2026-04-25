@@ -6,7 +6,7 @@ type Props<T extends HistoryItem | string> = {
   selection: UseColorsSelectionObject<T>;
   focusedItem: T;
   formattedFocusedItem: string;
-  /** Optional callback fired after the plain "Copy to Clipboard" action — useful for history tracking. */
+  /** Optional callback fired after any "Copy Selected Colors" variant — useful for history tracking. */
   onCopyMany?: (items: T[]) => void;
 };
 
@@ -39,6 +39,7 @@ export function MultipleColorsActions<T extends HistoryItem | string>({
               title={title}
               content={copySelectedColors(selectedItems, format)}
               icon={icon}
+              onCopy={onCopyMany ? () => onCopyMany(selectedItems) : undefined}
             />
           ))}
         </ActionPanel.Submenu>
