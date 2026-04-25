@@ -70,4 +70,4 @@ export type UseColorsSelectionObject<T = HistoryItem | string> = {
 
 export type CopyColorsFormat = "json" | "css-classes" | "css-variables";
 
-export type SelectMode = "single" | "multi";
+export type ViewMode = "grid" | "list";

@@ -1,11 +1,13 @@
-import { AI, Action, ActionPanel, Grid, Icon, LaunchProps, List } from "@raycast/api";
+import { AI, Action, ActionPanel, Grid, LaunchProps, List } from "@raycast/api";
 import { showFailureToast, useAI } from "@raycast/utils";
 import { useState } from "react";
 import CopyAsSubmenu from "./components/CopyAsSubmenu";
+import { MultipleColorsActions } from "./components/MultipleColorsActions";
+import { ToggleViewAction } from "./components/ToggleViewAction";
 import { useColorsSelection } from "./hooks/useColorsSelection";
 import { addToHistory } from "./lib/history";
-import { SelectMode, UseColorsSelectionObject } from "./lib/types";
-import { COPY_FORMATS, copySelectedColors, getFormattedColor, getIcon, getPreviewColor } from "./lib/utils";
+import { UseColorsSelectionObject, ViewMode } from "./lib/types";
+import { getFormattedColor, getIcon, getPreviewColor } from "./lib/utils";
 
 export default function GenerateColors(props: LaunchProps<{ arguments: Arguments.GenerateColors }>) {
   const { data, isLoading } = useAI(
@@ -28,7 +30,7 @@ JSON colors:`,
     },
   );
 
-  const [selectMode, setSelectMode] = useState<SelectMode>("single");
+  const [viewMode, setViewMode] = useState<ViewMode>("grid");
 
   let colors: string[] = [];
   try {
@@ -39,21 +41,9 @@ JSON colors:`,
 
   const { selection } = useColorsSelection<string>(colors);
 
-  if (selectMode === "multi") {
+  if (viewMode === "list") {
     return (
-      <List
-        isLoading={isLoading}
-        searchBarAccessory={
-          <List.Dropdown
-            tooltip="Switch Select Mode"
-            value={selectMode}
-            onChange={(v) => setSelectMode(v as SelectMode)}
-          >
-            <List.Dropdown.Item title="Single-Select Mode" value="single" />
-            <List.Dropdown.Item title="Multi-Select Mode" value="multi" />
-          </List.Dropdown>
-        }
-      >
+      <List isLoading={isLoading}>
         {colors.map((c, index) => {
           const formattedColor = getFormattedColor(c);
           const previewColor = getPreviewColor(c);
@@ -64,7 +54,15 @@ JSON colors:`,
               key={index}
               icon={getIcon(previewColor)}
               title={`${isSelected ? "✓ " : ""}${formattedColor}`}
-              actions={<MultiActions color={c} formattedColor={formattedColor} selection={selection} />}
+              actions={
+                <Actions
+                  color={c}
+                  formattedColor={formattedColor}
+                  viewMode={viewMode}
+                  setViewMode={setViewMode}
+                  selection={selection}
+                />
+              }
             />
           );
         })}
@@ -73,32 +71,26 @@ JSON colors:`,
   }
 
   return (
-    <Grid
-      columns={5}
-      isLoading={isLoading}
-      searchBarAccessory={
-        <Grid.Dropdown tooltip="Switch Select Mode" value={selectMode} onChange={(v) => setSelectMode(v as SelectMode)}>
-          <Grid.Dropdown.Item title="Single-Select Mode" value="single" />
-          <Grid.Dropdown.Item title="Multi-Select Mode" value="multi" />
-        </Grid.Dropdown>
-      }
-    >
+    <Grid columns={5} isLoading={isLoading}>
       {colors.map((c, index) => {
         const formattedColor = getFormattedColor(c);
         const previewColor = getPreviewColor(c);
         const color = { light: previewColor, dark: previewColor, adjustContrast: false };
+        const isSelected = selection.helpers.getIsItemSelected(c);
 
         return (
           <Grid.Item
             key={index}
             content={{ color }}
-            title={formattedColor}
+            title={`${isSelected ? "✓ " : ""}${formattedColor}`}
             actions={
-              <ActionPanel>
-                <Action.CopyToClipboard content={formattedColor} onCopy={() => addToHistory(formattedColor)} />
-                <Action.Paste content={formattedColor} onPaste={() => addToHistory(formattedColor)} />
-                <CopyAsSubmenu color={formattedColor} onCopy={() => addToHistory(formattedColor)} />
-              </ActionPanel>
+              <Actions
+                color={c}
+                formattedColor={formattedColor}
+                viewMode={viewMode}
+                setViewMode={setViewMode}
+                selection={selection}
+              />
             }
           />
         );
@@ -107,17 +99,15 @@ JSON colors:`,
   );
 }
 
-type MultiActionsProps = {
+type ActionsProps = {
   color: string;
   formattedColor: string;
+  viewMode: ViewMode;
+  setViewMode: (mode: ViewMode) => void;
   selection: UseColorsSelectionObject<string>;
 };
 
-function MultiActions({ color, formattedColor, selection }: MultiActionsProps) {
-  const { toggleSelection, selectAll, clearSelection } = selection.actions;
-  const { anySelected, allSelected, selectedItems, countSelected } = selection.selected;
-  const isSelected = selection.helpers.getIsItemSelected(color);
-
+function Actions({ color, formattedColor, viewMode, setViewMode, selection }: ActionsProps) {
   return (
     <ActionPanel>
       <ActionPanel.Section>
@@ -126,50 +116,15 @@ function MultiActions({ color, formattedColor, selection }: MultiActionsProps) {
         <CopyAsSubmenu color={formattedColor} onCopy={() => addToHistory(formattedColor)} />
       </ActionPanel.Section>
 
-      <ActionPanel.Section title="Multiple Colors">
-        {countSelected > 0 && (
-          <ActionPanel.Submenu
-            title="Copy Selected Colors"
-            icon={Icon.CopyClipboard}
-            shortcut={{ modifiers: ["cmd", "shift"], key: "enter" }}
-          >
-            <Action.CopyToClipboard
-              title="Copy to Clipboard"
-              content={selectedItems.map((item) => getFormattedColor(item)).join(";")}
-              onCopy={() => selectedItems.forEach((item) => addToHistory(item))}
-            />
-            {COPY_FORMATS.map(({ format, title, icon }) => (
-              <Action.CopyToClipboard
-                key={format}
-                title={title}
-                content={copySelectedColors(selectedItems, format)}
-                icon={icon}
-              />
-            ))}
-          </ActionPanel.Submenu>
-        )}
-        <Action
-          icon={isSelected ? Icon.Checkmark : Icon.Circle}
-          title={isSelected ? `Deselect Color ${formattedColor}` : `Select Color ${formattedColor}`}
-          shortcut={{ modifiers: ["cmd"], key: "s" }}
-          onAction={() => toggleSelection(color)}
-        />
-        {!allSelected && (
-          <Action
-            icon={Icon.Checkmark}
-            title="Select All Colors"
-            shortcut={{ modifiers: ["cmd", "shift"], key: "a" }}
-            onAction={selectAll}
-          />
-        )}
-        {anySelected && (
-          <Action
-            icon={Icon.XMarkCircle}
-            title="Clear Selection"
-            shortcut={{ modifiers: ["cmd", "shift"], key: "z" }}
-            onAction={clearSelection}
-          />
-        )}
+      <MultipleColorsActions
+        selection={selection}
+        focusedItem={color}
+        formattedFocusedItem={formattedColor}
+        onCopyMany={(items) => items.forEach((item) => addToHistory(item))}
+      />
+
+      <ActionPanel.Section title="View">
+        <ToggleViewAction viewMode={viewMode} setViewMode={setViewMode} />
       </ActionPanel.Section>
     </ActionPanel>
   );
